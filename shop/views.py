@@ -217,11 +217,31 @@ def signup(request):
     if request.user.is_authenticated: return redirect('home')
     form = SignUpForm(request.POST or None)
     if form.is_valid():
-        user = form.save(commit=False); user.is_active = not settings.REQUIRE_EMAIL_CONFIRMATION; user.save(); CustomerProfile.objects.create(user=user, loyalty_points=WELCOME_POINTS)
+        existing_user = User.objects.filter(email__iexact=form.cleaned_data['email']).first()
+        if existing_user and not existing_user.is_active:
+            user = existing_user
+            user.username = form.cleaned_data['username']
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.is_active = not settings.REQUIRE_EMAIL_CONFIRMATION
+            user.set_password(form.cleaned_data['password1'])
+            user.save(update_fields=['username', 'first_name', 'last_name', 'password', 'is_active'])
+            CustomerProfile.objects.get_or_create(user=user)
+            created_user = False
+        else:
+            user = form.save(commit=False); user.is_active = not settings.REQUIRE_EMAIL_CONFIRMATION; user.save(); CustomerProfile.objects.create(user=user, loyalty_points=WELCOME_POINTS)
+            created_user = True
         if settings.REQUIRE_EMAIL_CONFIRMATION:
             token = default_token_generator.make_token(user)
             activation_url = request.build_absolute_uri(f'/activate/{urlsafe_base64_encode(force_bytes(user.pk))}/{token}/')
-            send_mail('Confirm your phoneCase254 account', f'Welcome! Confirm your email here: {activation_url}', settings.DEFAULT_FROM_EMAIL, [user.email])
+            try:
+                send_mail('Confirm your phoneCase254 account', f'Welcome! Confirm your email here: {activation_url}', settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+            except Exception:
+                logger.exception('Could not send account confirmation email to %s', user.email)
+                if created_user:
+                    user.delete()
+                form.add_error(None, 'We could not send the confirmation email right now. Please try again shortly.')
+                return render(request, 'registration/signup.html', {'form': form})
             return render(request, 'registration/check_email.html', {'email': user.email})
         login(request, user)
         messages.success(request, 'Your account is ready. Welcome to phoneCase254.')

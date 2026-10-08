@@ -54,6 +54,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
 ]
+AUTHENTICATION_BACKENDS = ['shop.backends.EmailOrUsernameBackend']
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
@@ -78,11 +79,20 @@ EMAIL_BACKEND = os.environ.get(
     'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST else 'django.core.mail.backends.console.EmailBackend',
 )
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '15'))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'phonecase254.shop@gmail.com')
 ORDER_NOTIFICATION_EMAIL = os.environ.get('ORDER_NOTIFICATION_EMAIL', 'phonecase254.shop@gmail.com')
 OWNER_PHONE_NUMBER = os.environ.get('OWNER_PHONE_NUMBER', '0727729400')
+
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = os.getenv("EMAIL_HOST")
+# EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+# DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 # Add your Daraja credentials and phone number when you are ready to connect payments.
 MPESA_PAYBILL_NUMBER = os.environ.get('MPESA_PAYBILL_NUMBER', '174379')

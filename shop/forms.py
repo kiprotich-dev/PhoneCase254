@@ -9,8 +9,10 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = ('first_name', 'last_name', 'email', 'username', 'password1', 'password2')
     def clean_email(self):
-        email = self.cleaned_data['email'].lower()
-        if User.objects.filter(email__iexact=email).exists(): raise forms.ValidationError('An account with this email already exists.')
+        email = self.cleaned_data['email'].strip().lower()
+        existing = User.objects.filter(email__iexact=email).first()
+        if existing and existing.is_active:
+            raise forms.ValidationError('An account with this email already exists. Please log in or reset your password.')
         return email
 
 class CheckoutForm(forms.Form):
