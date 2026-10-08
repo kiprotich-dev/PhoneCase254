@@ -18,6 +18,7 @@
       </p>
       <form method="post" class="form-card">
         {% csrf_token %}
+        {{ form.non_field_errors }}
         {% for field in form %}
           <label>
             {{ field.label }}
