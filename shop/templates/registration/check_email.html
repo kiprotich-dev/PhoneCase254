@@ -1,0 +1,27 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+  <main class="auth page narrow centered">
+    <div class="big-icon">
+      ✉
+    </div>
+    <p class="eyebrow">
+      One last step
+    </p>
+    <h1>
+      Check your
+      <em>
+        inbox.
+      </em>
+    </h1>
+    <p>
+      We sent a confirmation link to
+      <strong>
+        {{ email }}
+      </strong>
+      . Click it to activate your account before placing an order.
+    </p>
+    <a class="text-link" href="{% url 'home' %}">
+      Back to the shop ↗
+    </a>
+  </main>
+  {% endblock %}

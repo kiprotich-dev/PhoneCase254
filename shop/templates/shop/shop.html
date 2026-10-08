@@ -1,0 +1,45 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  Shop cases — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="page">
+      <div class="shop-heading">
+        <div>
+          <p class="eyebrow">
+            The collection
+          </p>
+          <h1>
+            Find your
+            <em>
+              case.
+            </em>
+          </h1>
+        </div>
+        <p class="shop-description">
+          A little protection, a lot of personality.
+          <br>
+          Made for wherever the day takes you.
+        </p>
+      </div>
+      <div class="filters">
+        <a class="{% if not active_category %}selected{% endif %}" href="{% url 'shop' %}">
+          All cases
+        </a>
+        {% for category in nav_categories %}
+          <a class="{% if active_category == category.slug %}selected{% endif %}" href="?category={{ category.slug }}">
+            {{ category.name }}
+          </a>
+          {% endfor %}
+        </div>
+        <div class="product-grid">
+          {% for product in products %}
+            {% include 'shop/product_card.html' with product=product %}
+          {% empty %}
+            <p>
+              No cases matched your search.
+            </p>
+            {% endfor %}
+          </div>
+        </main>
+        {% endblock %}

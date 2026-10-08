@@ -1,0 +1,126 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  Checkout — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="page checkout">
+      <div>
+        <p class="eyebrow">
+          Almost yours
+        </p>
+        <h1>
+          Check
+          <em>
+            out.
+          </em>
+        </h1>
+        <form method="post" class="form-card">
+          {% csrf_token %}
+          {% for field in form %}
+            <label>
+              {{ field.label }}
+              {{ field }}
+              {% if field.help_text %}
+                <small>
+                  {{ field.help_text }}
+                </small>
+                {% endif %}
+                {{ field.errors }}
+              </label>
+              {% endfor %}
+              <button class="button dark full">
+                Place order
+                <span>
+                  ↗
+                </span>
+              </button>
+            </form>
+          </div>
+          <aside class="order-aside" data-subtotal="{{ subtotal }}" data-points="{{ available_points }}">
+            <p class="eyebrow">
+              Order summary
+            </p>
+            <p class="muted">You have {{ available_points }} loyalty points. Each point is worth KSh 1.</p>
+            {% for item in items %}
+              <div class="summary-line">
+                <span>
+                  {{ item.product.name }}
+                  ×
+                  {{ item.quantity }}
+                </span>
+                <strong>
+                  KSh
+                  {{ item.line_total|floatformat:0 }}
+                </strong>
+              </div>
+              {% endfor %}
+              <div class="summary-line">
+                <span>
+                  Subtotal
+                </span>
+                <strong>
+                  KSh
+                  {{ subtotal|floatformat:0 }}
+                </strong>
+              </div>
+              <div class="summary-line prepaid-discount">
+                <span>
+                  Prepaid item discount (5%)
+                </span>
+                <strong>
+                  - KSh
+                  <span id="checkout-item-discount">
+                    {{ item_discount|floatformat:2 }}
+                  </span>
+                </strong>
+              </div>
+              <div class="summary-line prepaid-discount">
+                <span>
+                  Delivery discount
+                </span>
+                <strong>
+                  - KSh
+                  <span id="checkout-delivery-discount">
+                    {{ delivery_discount|floatformat:2 }}
+                  </span>
+                </strong>
+              </div>
+              <div class="summary-line points-discount" {% if not points_discount %}hidden{% endif %}>
+                <span>
+                  Loyalty points discount
+                </span>
+                <strong>
+                  - KSh
+                  <span id="checkout-points-discount">
+                    {{ points_discount|floatformat:2 }}
+                  </span>
+                </strong>
+              </div>
+              <div class="summary-line">
+                <span>
+                  Delivery
+                </span>
+                <strong>
+                  KSh
+                  <span id="checkout-delivery-fee">
+                    {{ delivery_fee|floatformat:2 }}
+                  </span>
+                </strong>
+              </div>
+              <div class="total-line">
+                <span>
+                  Total
+                </span>
+                <strong>
+                  KSh
+                  <span id="checkout-total">
+                    {{ total|floatformat:2 }}
+                  </span>
+                </strong>
+              </div>
+              <p class="muted">
+                Orders above KSh 2,000 receive 50% off delivery. Pay before delivery also saves 5% on items.
+              </p>
+            </aside>
+          </main>
+          {% endblock %}

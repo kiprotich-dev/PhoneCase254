@@ -1,0 +1,80 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+  <main class="auth page narrow centered">
+    <div class="big-icon">
+      {% if order.payment_method == 'prepaid' and not order.payment_status == 'paid' %}⌛{% else %}✓{% endif %}
+    </div>
+    <p class="eyebrow">
+      {{ order.public_reference }}
+    </p>
+    <h1>
+      {% if order.payment_method == 'prepaid' and not order.payment_status == 'paid' %}
+        Payment first.
+      {% else %}
+        You're all
+        <em>
+          set.
+        </em>
+      {% endif %}
+    </h1>
+    {% if order.payment_method == 'cod' %}
+      <p>
+        Your order is confirmed for
+        <strong>
+          pay on delivery
+        </strong>
+        . The delivery person will collect payment when your package arrives.
+      </p>
+    {% elif mpesa_started %}
+      <p>
+        We’ve sent an M-Pesa payment prompt to
+        <strong>
+          {{ order.mpesa_number }}
+        </strong>
+        . Approve it on your phone. Your order will only be confirmed and invoiced after Safaricom confirms the payment.
+      </p>
+    {% else %}
+      <p>
+        We couldn’t start the M-Pesa payment prompt yet, so your order has not been confirmed. Please try again shortly or choose pay on delivery.
+      </p>
+    {% endif %}
+        <p class="muted">
+          Payment status:
+          <span id="payment-status" data-status-url="{% url 'order_status' order.id %}">{{ order.get_payment_status_display }}</span>
+        </p>
+        {% if order.payment_method == 'prepaid' and order.payment_status == 'pending' %}
+          <p id="payment-status-note" class="muted">Waiting for Safaricom to confirm your payment…</p>
+          <script>
+            (() => {
+              const status = document.querySelector('#payment-status');
+              const note = document.querySelector('#payment-status-note');
+              const statusUrl = status?.dataset.statusUrl;
+              if (!statusUrl) return;
+              const checkPayment = async () => {
+                try {
+                  const response = await fetch(statusUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+                  if (!response.ok) return;
+                  const data = await response.json();
+                  if (data.payment_status === 'paid') {
+                    status.textContent = 'Paid';
+                    note.textContent = 'Payment confirmed. Your order is confirmed and the invoice has been emailed.';
+                    window.clearInterval(timer);
+                  } else if (data.payment_status === 'failed' || data.status === 'cancelled') {
+                    status.textContent = 'Failed';
+                    note.textContent = 'Payment was unsuccessful, so no order was placed. Please try again or choose pay on delivery.';
+                    window.clearInterval(timer);
+                  }
+                } catch (error) {
+                  window.console.debug('Payment status check pending.', error);
+                }
+              };
+              const timer = window.setInterval(checkPayment, 2000);
+              checkPayment();
+            })();
+          </script>
+        {% endif %}
+        <a class="button dark" href="{% url 'orders' %}">
+          View my orders
+        </a>
+      </main>
+      {% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  {{ product.name }}
+  — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="page">
+      <div class="breadcrumbs">
+        <a href="{% url 'shop' %}">
+          Shop
+        </a>
+        /
+        {{ product.name }}
+      </div>
+      <section class="detail">
+        <div class="detail-visual" style="--accent:{{ product.accent }}">
+          {% if product.image_url %}
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+          {% elif product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+          {% else %}
+            <div class="case-preview large">
+              <span>
+              </span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="detail-copy">
+            <p class="eyebrow">
+              {{ product.category.name|default:'The collection' }}
+            </p>
+            <h1>
+              {{ product.name }}
+            </h1>
+            <p class="price">
+              KSh
+              {{ product.price|floatformat:0 }}
+            </p>
+            <p>
+              {{ product.description }}
+            </p>
+            {% if product.stock > 0 %}
+              <p class="stock">
+                ✦ In stock and ready to ship
+              </p>
+              <form method="post" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+                <button class="button dark full">
+                  Add to bag
+                  <span>
+                    ↗
+                  </span>
+                </button>
+              </form>
+            {% else %}
+              <p class="stock sold-out-text">
+                Currently out of stock. We’ll let you know when it returns.
+              </p>
+              {% endif %}
+              {% if user.is_authenticated %}
+                <form method="post" action="{% url 'toggle_wishlist' product.id %}">
+                  {% csrf_token %}
+                  <button class="wishlist-button">
+                    ♡ Save to wishlist
+                  </button>
+                </form>
+              {% else %}
+                <a class="wishlist-button" href="{% url 'login' %}">
+                  ♡ Log in to save this
+                </a>
+                {% endif %}
+                <div class="details-list">
+                  <div>
+                    <b>
+                      Protective, not bulky
+                    </b>
+                    <span>
+                      Lightweight impact protection
+                    </span>
+                  </div>
+                  <div>
+                    <b>
+                      Made for daily life
+                    </b>
+                    <span>
+                      Raised edges and easy grip
+                    </span>
+                  </div>
+                </div>
+                {% if can_review %}
+                  <a class="wishlist-button" href="{% url 'review_product' product.slug %}">Review this case · earn 25 points</a>
+                {% endif %}
+              </div>
+            </section>
+            <section class="product-section">
+              <div class="section-heading">
+                <h2>Customer <em>notes.</em></h2>
+                <span class="muted">{{ reviews|length }} review{{ reviews|length|pluralize }}</span>
+              </div>
+              {% for review in reviews %}
+                <article class="review-card">
+                  <div class="review-heading">
+                    <strong>{{ review.title }}</strong>
+                    <span>{{ review.rating }}/5 · {{ review.user.get_full_name|default:review.user.username }}</span>
+                  </div>
+                  <p>{{ review.body }}</p>
+                  {% if review.image %}<a href="{{ review.image.url }}" class="review-image-link" data-review-image="{{ review.image.url }}"><img src="{{ review.image.url }}" alt="Photo shared by {{ review.user.username }}" class="review-image"></a>{% endif %}
+                </article>
+              {% empty %}
+                <p class="muted">No reviews yet. Verified customers can be the first to share their experience.</p>
+              {% endfor %}
+            </section>
+            <div class="image-viewer" id="image-viewer" hidden role="dialog" aria-modal="true" aria-label="Review photo">
+              <button type="button" class="image-viewer-close" aria-label="Close photo">×</button>
+              <img id="image-viewer-photo" src="" alt="Expanded customer review photo">
+            </div>
+            <script>
+              (() => {
+                const viewer = document.querySelector('#image-viewer');
+                const photo = document.querySelector('#image-viewer-photo');
+                const close = () => { viewer.hidden = true; photo.src = ''; document.body.classList.remove('viewer-open'); };
+                document.querySelectorAll('[data-review-image]').forEach((link) => link.addEventListener('click', (event) => {
+                  event.preventDefault();
+                  photo.src = link.dataset.reviewImage;
+                  viewer.hidden = false;
+                  document.body.classList.add('viewer-open');
+                }));
+                viewer?.addEventListener('click', (event) => { if (event.target === viewer || event.target === document.querySelector('.image-viewer-close')) close(); });
+                document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && viewer && !viewer.hidden) close(); });
+              })();
+            </script>
+            <section class="product-section related">
+              <div class="section-heading">
+                <h2>
+                  You may also
+                  <em>
+                    like
+                  </em>
+                </h2>
+              </div>
+              <div class="product-grid">
+                {% for product in related %}
+                  {% include 'shop/product_card.html' with product=product %}
+                  {% endfor %}
+                </div>
+              </section>
+            </main>
+            {% endblock %}

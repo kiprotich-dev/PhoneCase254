@@ -1,0 +1,47 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  Create account — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="auth page narrow">
+      <p class="eyebrow">
+        Welcome in
+      </p>
+      <h1>
+        Create your
+        <em>
+          account.
+        </em>
+      </h1>
+      <p>
+        Sign up with your real email to save favourites and place orders.
+      </p>
+      <form method="post" class="form-card">
+        {% csrf_token %}
+        {% for field in form %}
+          <label>
+            {{ field.label }}
+            {{ field }}
+            {% if field.help_text %}
+              <small>
+                {{ field.help_text }}
+              </small>
+              {% endif %}
+              {{ field.errors }}
+            </label>
+            {% endfor %}
+            <button class="button dark full">
+              Create account
+              <span>
+                ↗
+              </span>
+            </button>
+          </form>
+          <p>
+            Already have an account?
+            <a href="{% url 'login' %}" class="text-link">
+              Log in
+            </a>
+          </p>
+        </main>
+        {% endblock %}

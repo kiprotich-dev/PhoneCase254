@@ -1,0 +1,57 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+  <main class="page narrow">
+    <p class="eyebrow">
+      Your account
+    </p>
+    <div class="account-heading">
+      <h1>
+        Your
+        <em>
+          orders.
+        </em>
+      </h1>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="text-link" type="submit">
+          Log out
+        </button>
+      </form>
+    </div>
+    <div class="loyalty-card">
+      <div>
+        <p class="eyebrow">Your rewards</p>
+        <strong>{{ profile.loyalty_points }} points</strong>
+        <p class="muted">Worth KSh {{ profile.loyalty_points }} · Use them at checkout.</p>
+      </div>
+      <span class="status">{{ profile.get_tier_display }} member</span>
+    </div>
+    <p class="muted loyalty-note">Earn 5 points for every purchased item priced above KSh 500. Reviews earn 25 points.</p>
+    {% for order in orders %}
+      <a class="order-row" href="{% url 'order_detail' order.id %}">
+        <span>
+          #
+          {{ order.public_reference }}
+          ·
+          {{ order.created_at|date:'d M Y' }}
+        </span>
+        <strong>
+          KSh
+          {{ order.total|floatformat:0 }}
+        </strong>
+        <span class="status">
+          {{ order.get_status_display }}
+        </span>
+      </a>
+    {% empty %}
+      <div class="empty">
+        <p>
+          You haven’t placed an order yet.
+        </p>
+        <a class="button dark" href="{% url 'shop' %}">
+          Shop cases
+        </a>
+      </div>
+      {% endfor %}
+    </main>
+    {% endblock %}

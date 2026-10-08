@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;background:#f4f1eb;color:#18211d;font-family:Arial,sans-serif;padding:28px 12px;">
+    <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #ded8ce;">
+      <div style="background:#b42318;color:#ffffff;padding:18px 24px;font-size:20px;font-weight:700;letter-spacing:.04em;">
+        ATTENTION REQUIRED: ORDER CANCELLED
+      </div>
+      <div style="padding:26px 24px;">
+        <p style="font-size:18px;margin:0 0 18px;">Order {{ order.public_reference }} has been cancelled.</p>
+        <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">
+          <tr><td style="padding:9px 0;border-bottom:1px solid #e7e2da;font-weight:700;">Customer</td><td style="padding:9px 0;border-bottom:1px solid #e7e2da;">{{ order.full_name }}</td></tr>
+          <tr><td style="padding:9px 0;border-bottom:1px solid #e7e2da;font-weight:700;">Email</td><td style="padding:9px 0;border-bottom:1px solid #e7e2da;">{{ customer_email }}</td></tr>
+          <tr><td style="padding:9px 0;border-bottom:1px solid #e7e2da;font-weight:700;">Phone</td><td style="padding:9px 0;border-bottom:1px solid #e7e2da;">{{ order.phone }}</td></tr>
+          <tr><td style="padding:9px 0;border-bottom:1px solid #e7e2da;font-weight:700;">Total</td><td style="padding:9px 0;border-bottom:1px solid #e7e2da;font-weight:700;">KSh {{ order.total }}</td></tr>
+          <tr><td style="padding:9px 0;font-weight:700;">Cancelled at</td><td style="padding:9px 0;">{{ cancelled_at|date:"d M Y, H:i" }}</td></tr>
+        </table>
+        <p style="margin:0;padding:14px 16px;background:#fff4e5;border-left:4px solid #f59e0b;">Reserved stock has been returned to inventory. Review the order in the admin panel if follow-up is needed.</p>
+      </div>
+      <div style="padding:16px 24px;background:#18211d;color:#ffffff;font-size:12px;">phoneCase254 · Store operations alert</div>
+    </div>
+  </body>
+</html>

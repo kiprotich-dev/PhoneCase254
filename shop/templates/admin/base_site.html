@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}
+  {{ title }}
+  | phoneCase254 studio
+  {% endblock %}
+  {% block branding %}
+    <a href="{% url 'admin:index' %}" class="admin-brand">
+      <span>
+        phone
+      </span>
+      Case254
+      <small>
+        studio
+      </small>
+    </a>
+    {% endblock %}
+    {% block nav-global %}
+      {% endblock %}
+      {% block extrahead %}
+        {{ block.super }}
+        <link rel="stylesheet" href="{% static 'shop/css/admin.css' %}">
+        <link rel="stylesheet" href="{% static 'shop/css/admin-contrast.css' %}">
+        <meta name="theme-color" content="#1e2420">
+        {% endblock %}

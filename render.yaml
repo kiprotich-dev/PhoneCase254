@@ -1,0 +1,53 @@
+databases:
+  - name: phonecase254-db
+    plan: free
+    databaseName: phonecase254
+    user: phonecase254
+
+services:
+  - type: web
+    name: phonecase254
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phonecase254-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: 'False'
+      - key: DJANGO_ALLOWED_HOSTS
+        value: '.onrender.com'
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: ORDER_NOTIFICATION_EMAIL
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: '587'
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: MPESA_ENVIRONMENT
+        value: sandbox
+      - key: MPESA_CONSUMER_KEY
+        sync: false
+      - key: MPESA_CONSUMER_SECRET
+        sync: false
+      - key: MPESA_PASSKEY
+        sync: false
+      - key: MPESA_SHORT_CODE
+        value: '174379'
+      - key: MPESA_PAYBILL_NUMBER
+        value: '174379'
+      - key: MPESA_CALLBACK_URL
+        sync: false

@@ -1,0 +1,55 @@
+<article class="product-card">
+  <a href="{{ product.get_absolute_url }}" class="product-visual" style="--accent:{{ product.accent }}">
+    {% if product.image_url %}
+      <img src="{{ product.image_url }}" alt="{{ product.name }}">
+    {% elif product.image %}
+      <img src="{{ product.image.url }}" alt="{{ product.name }}">
+    {% else %}
+      <div class="case-preview">
+        <span>
+        </span>
+      </div>
+      {% endif %}
+      {% if product.is_featured %}
+        <span class="tag">
+          Favourite
+        </span>
+        {% endif %}
+        {% if product.stock < 1 %}
+          <span class="tag sold-out">
+            Sold out
+          </span>
+          {% endif %}
+        </a>
+        <div class="product-info">
+          <div>
+            <a href="{{ product.get_absolute_url }}">
+              <h3>
+                {{ product.name }}
+              </h3>
+            </a>
+            <p>
+              {{ product.category.name|default:'Phone case' }}
+            </p>
+          </div>
+          <strong>
+            KSh
+            {{ product.price|floatformat:0 }}
+          </strong>
+        </div>
+        {% if product.stock > 0 %}
+          <form method="post" action="{% url 'add_to_cart' product.id %}">
+            {% csrf_token %}
+            <button class="quick-add">
+              Add to bag
+              <span>
+                +
+              </span>
+            </button>
+          </form>
+        {% else %}
+          <p class="stock sold-out-text">
+            Currently out of stock
+          </p>
+          {% endif %}
+        </article>

@@ -1,0 +1,46 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  Log in — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="auth page narrow">
+      <p class="eyebrow">
+        Good to see you
+      </p>
+      <h1>
+        Welcome
+        <em>
+          back.
+        </em>
+      </h1>
+      <form method="post" class="form-card">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label>
+          Email or username
+          {{ form.username }}
+        </label>
+        <label>
+          Password
+          {{ form.password }}
+        </label>
+        <button class="button dark full">
+          Log in
+          <span>
+            ↗
+          </span>
+        </button>
+      </form>
+      <p>
+        <a href="{% url 'password_reset' %}" class="text-link">
+          Forgot your password?
+        </a>
+      </p>
+      <p>
+        New here?
+        <a href="{% url 'signup' %}" class="text-link">
+          Create an account
+        </a>
+      </p>
+    </main>
+    {% endblock %}

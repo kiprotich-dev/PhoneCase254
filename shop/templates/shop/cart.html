@@ -1,0 +1,99 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  Your bag — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="page narrow">
+      <p class="eyebrow">
+        Your picks
+      </p>
+      <h1>
+        Your
+        <em>
+          bag.
+        </em>
+      </h1>
+      {% if items %}
+        <form method="post" action="{% url 'update_cart' %}">
+          {% csrf_token %}
+          {% for item in items %}
+            <div class="cart-row">
+              <div class="mini-visual" style="--accent:{{ item.product.accent }}">
+                {% if item.product.image_url %}
+                  <img style="width:100%;height:100%;object-fit:cover;display:block" src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
+                {% elif item.product.image %}
+                  <img style="width:100%;height:100%;object-fit:cover;display:block" src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                {% else %}
+                  <div class="case-preview">
+                    <span>
+                    </span>
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="cart-product">
+                  <h3>
+                    {{ item.product.name }}
+                  </h3>
+                  <p>
+                    KSh
+                    {{ item.product.price|floatformat:0 }}
+                  </p>
+                </div>
+                <input type="number" name="quantity_{{ item.product.id }}" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}">
+                <strong>
+                  KSh
+                  {{ item.line_total|floatformat:0 }}
+                </strong>
+                <a href="{% url 'remove_from_cart' item.product.id %}">
+                  ×
+                </a>
+              </div>
+              {% endfor %}
+            </form>
+            <div class="cart-summary">
+              <div class="summary-line">
+                <span>
+                  Subtotal
+                </span>
+                <strong>
+                  KSh
+                  {{ subtotal|floatformat:0 }}
+                </strong>
+              </div>
+              <div class="summary-line">
+                <span>
+                  Delivery (10%)
+                </span>
+                <strong>
+                  KSh
+                  {{ delivery_fee|floatformat:0 }}
+                </strong>
+              </div>
+              <div class="total-line">
+                <span>
+                  Total
+                </span>
+                <strong>
+                  KSh
+                  {{ total|floatformat:0 }}
+                </strong>
+              </div>
+              <a class="button dark" href="{% url 'checkout' %}">
+                Continue to checkout
+                <span>
+                  ↗
+                </span>
+              </a>
+            </div>
+          {% else %}
+            <div class="empty">
+              <p>
+                Your bag is waiting for something good.
+              </p>
+              <a class="button dark" href="{% url 'shop' %}">
+                Shop cases
+              </a>
+            </div>
+            {% endif %}
+          </main>
+          {% endblock %}

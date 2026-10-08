@@ -1,0 +1,20 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+  <main class="auth page narrow centered">
+    <p class="eyebrow">
+      That link has expired
+    </p>
+    <h1>
+      Let's try
+      <em>
+        again.
+      </em>
+    </h1>
+    <p>
+      This confirmation link is no longer valid. Please create a fresh account or contact us.
+    </p>
+    <a class="button dark" href="{% url 'signup' %}">
+      Create account
+    </a>
+  </main>
+  {% endblock %}

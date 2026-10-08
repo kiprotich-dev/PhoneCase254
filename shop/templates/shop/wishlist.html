@@ -1,0 +1,28 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+  <main class="page">
+    <p class="eyebrow">
+      Saved for later
+    </p>
+    <h1>
+      Your
+      <em>
+        wishlist.
+      </em>
+    </h1>
+    <div class="product-grid">
+      {% for item in items %}
+        {% include 'shop/product_card.html' with product=item.product %}
+      {% empty %}
+        <div class="empty">
+          <p>
+            Nothing saved yet.
+          </p>
+          <a class="button dark" href="{% url 'shop' %}">
+            Find a favourite
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </main>
+    {% endblock %}

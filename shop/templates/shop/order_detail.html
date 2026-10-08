@@ -1,0 +1,114 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+  <main class="page narrow">
+    <p class="eyebrow">
+      {{ order.public_reference }}
+      ·
+      {{ order.created_at|date:'d M Y, H:i' }}
+    </p>
+    <h1>
+      Your order is
+      <em>
+        {{ order.get_status_display|lower }}
+        .
+      </em>
+    </h1>
+    <p class="muted">
+      {{ order.get_payment_method_display }}
+      ·
+      {{ order.get_payment_status_display }}
+    </p>
+    {% for item in order.items.all %}
+      <div class="order-row">
+        <span>
+          {{ item.product.name }}
+          ×
+          {{ item.quantity }}
+        </span>
+        <strong>
+          KSh
+          {{ item.line_total|floatformat:0 }}
+        </strong>
+        {% if order.payment_status == 'paid' or order.status == 'delivered' %}
+          <a class="text-link" href="{% url 'review_product' item.product.slug %}">Review</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="summary-line">
+        <span>
+          Subtotal
+        </span>
+        <strong>
+          KSh
+          {{ order.subtotal|floatformat:0 }}
+        </strong>
+      </div>
+      {% if order.item_discount %}
+        <div class="summary-line">
+          <span>
+            Prepaid item discount (5%)
+          </span>
+          <strong>
+            - KSh
+            {{ order.item_discount|floatformat:0 }}
+          </strong>
+        </div>
+        {% endif %}
+          {% if order.delivery_discount %}
+          <div class="summary-line">
+            <span>
+              Delivery discount
+            </span>
+            <strong>
+              - KSh
+              {{ order.delivery_discount|floatformat:0 }}
+            </strong>
+          </div>
+          {% endif %}
+          {% if order.points_discount %}
+            <div class="summary-line">
+              <span>Loyalty points ({{ order.points_redeemed }})</span>
+              <strong>- KSh {{ order.points_discount|floatformat:0 }}</strong>
+            </div>
+          {% endif %}
+          <div class="summary-line">
+            <span>
+              Delivery
+            </span>
+            <strong>
+              KSh
+              {{ order.delivery_fee|floatformat:0 }}
+            </strong>
+          </div>
+          <div class="total-line">
+            <span>
+              Total
+            </span>
+            <strong>
+              KSh
+              {{ order.total|floatformat:0 }}
+            </strong>
+          </div>
+          <p class="muted">
+            Delivering to
+            {{ order.delivery_address }}
+            .
+          </p>
+          {% if can_cancel %}
+            <form method="post" action="{% url 'cancel_order' order.id %}">
+              {% csrf_token %}
+              <button class="wishlist-button" type="submit">Cancel order within 3 minutes</button>
+            </form>
+            <p class="muted">Need to change an item or delivery detail? Cancel now and place a new order.</p>
+          {% endif %}
+          <a class="button dark" href="{% url 'reorder' order.id %}">
+            Reorder these items
+            <span>
+              ↗
+            </span>
+          </a>
+          <a class="wishlist-button" href="{% url 'contact' %}">
+            Need help with this order?
+          </a>
+        </main>
+        {% endblock %}

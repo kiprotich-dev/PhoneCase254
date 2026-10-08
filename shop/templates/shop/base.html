@@ -1,0 +1,138 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>
+      {% block title %}
+        phoneCase254
+        {% endblock %}
+      </title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
+    </head>
+    <body>
+      <div class="announcement">
+        Free delivery in Nairobi on orders over KSh 3,000
+        <span>
+          ✦
+        </span>
+        Designed to be kept
+      </div>
+      <header>
+        <a class="brand" href="{% url 'home' %}">
+          phone
+          <span>
+            Case
+          </span>
+          254
+        </a>
+        <nav>
+          <a href="{% url 'shop' %}">
+            Shop
+          </a>
+          <a href="{% url 'home' %}#story">
+            Our story
+          </a>
+          <a href="{% url 'home' %}#journal">
+            Journal
+          </a>
+        </nav>
+        <div class="header-actions">
+          <form class="search" action="{% url 'shop' %}">
+            <input name="q" placeholder="Search cases" value="{{ query|default:'' }}">
+            <button>
+              ⌕
+            </button>
+          </form>
+          <a href="{% url 'wishlist' %}" aria-label="Wishlist">
+            ♡
+            {% if wishlist_count %}
+              <small>
+                {{ wishlist_count }}
+              </small>
+              {% endif %}
+            </a>
+            {% if user.is_authenticated %}
+              <a href="{% url 'orders' %}" aria-label="Account">
+                ◯
+              </a>
+            {% else %}
+              <a class="join-link" href="{% url 'signup' %}">
+                Join
+              </a>
+              <a href="{% url 'login' %}" aria-label="Log in">
+                ◯
+              </a>
+              {% endif %}
+              <a href="{% url 'cart' %}" class="bag">
+                Bag (
+                {{ cart_count }}
+                )
+              </a>
+            </div>
+          </header>
+          {% if messages %}
+            <div class="messages">
+              {% for message in messages %}
+                <div>
+                  {{ message }}
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% block content %}
+                {% endblock %}
+                <footer>
+                  <div class="footer-brand">
+                    <a class="brand" href="{% url 'home' %}">
+                      phone
+                      <span>
+                        Case
+                      </span>
+                      254
+                    </a>
+                    <p>
+                      Cases with a point of view.
+                      <br>
+                      Made for the everyday.
+                    </p>
+                  </div>
+                  <div>
+                    <b>
+                      Explore
+                    </b>
+                    <a href="{% url 'shop' %}">
+                      Shop all
+                    </a>
+                    <a href="{% url 'home' %}#story">
+                      Our story
+                    </a>
+                  </div>
+                  <div>
+                    <b>
+                      Help
+                    </b>
+                    <a href="{% url 'orders' %}">
+                      Your orders
+                    </a>
+                    <a href="{% url 'contact' %}">
+                      Contact us
+                    </a>
+                  </div>
+                  <div>
+                    <b>
+                      Follow along
+                    </b>
+                    <p class="muted">
+                      @phonecase254
+                    </p>
+                  </div>
+                </footer>
+                <script src="{% static 'shop/js/app.js' %}">
+                </script>
+              </body>
+            </html>

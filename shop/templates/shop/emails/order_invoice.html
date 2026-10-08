@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>phoneCase254 invoice — {{ order.public_reference }}</title>
+  <style>
+    body { margin: 0; background: #f4f2ed; color: #1e2420; font-family: Arial, sans-serif; }
+    .page { max-width: 720px; margin: 32px auto; background: #fff; padding: 42px; }
+    .top { display: flex; justify-content: space-between; gap: 24px; border-bottom: 2px solid #1e2420; padding-bottom: 24px; }
+    .brand { font: italic 600 30px Georgia, serif; }
+    .brand span { font-style: normal; }
+    .label { color: #8a7e6f; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { font: 500 34px Georgia, serif; margin: 32px 0 8px; }
+    h1 em { color: #9c6e58; }
+    .meta, .address { color: #666; font-size: 13px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; margin: 28px 0; }
+    th { color: #777; font-size: 11px; letter-spacing: .1em; text-align: left; text-transform: uppercase; }
+    th:last-child, td:last-child { text-align: right; }
+    td, th { border-bottom: 1px solid #ddd9d1; padding: 13px 0; }
+    .totals { margin-left: auto; max-width: 300px; }
+    .totals p { display: flex; justify-content: space-between; margin: 10px 0; font-size: 13px; }
+    .totals .grand { border-top: 2px solid #1e2420; font-size: 18px; font-weight: bold; padding-top: 14px; }
+    .note { background: #f4f2ed; margin-top: 30px; padding: 16px; font-size: 13px; }
+    .footer { border-top: 1px solid #ddd9d1; color: #777; font-size: 12px; margin-top: 36px; padding-top: 18px; }
+    @media print { body { background: #fff; } .page { margin: 0; max-width: none; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="top">
+      <div class="brand">phone<span>Case</span>254</div>
+      <div class="label">Order invoice<br>{{ order.public_reference }}</div>
+    </div>
+    <h1>Thank you for your <em>order.</em></h1>
+    <p class="meta">Placed {{ order.created_at|date:'d M Y, H:i' }} · {{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</p>
+    <p class="label">Customer</p>
+    <p class="address">{{ order.full_name }}<br>{{ customer_email }}<br>{{ order.phone }}<br>{{ order.delivery_address }}</p>
+    <table>
+      <thead><tr><th>Phone case details</th><th>Quantity</th><th>Amount</th></tr></thead>
+      <tbody>{% for item in items %}<tr><td><strong>{{ item.product.name }}</strong><br><span class="meta">{{ item.product.category.name|default:'Phone case' }}</span><br>{{ item.product.description }}</td><td>{{ item.quantity }}</td><td>KSh {{ item.line_total|floatformat:2 }}</td></tr>{% endfor %}</tbody>
+    </table>
+    <div class="totals">
+      <p><span>Subtotal</span><strong>KSh {{ order.subtotal|floatformat:2 }}</strong></p>
+      {% if order.item_discount %}<p><span>Item discount (5%)</span><strong>- KSh {{ order.item_discount|floatformat:2 }}</strong></p>{% endif %}
+      {% if order.delivery_discount %}<p><span>Delivery discount</span><strong>- KSh {{ order.delivery_discount|floatformat:2 }}</strong></p>{% endif %}
+      {% if order.points_discount %}<p><span>Loyalty points ({{ order.points_redeemed }})</span><strong>- KSh {{ order.points_discount|floatformat:2 }}</strong></p>{% endif %}
+      <p><span>Delivery</span><strong>KSh {{ order.delivery_fee|floatformat:2 }}</strong></p>
+      <p class="grand"><span>Total</span><strong>KSh {{ order.total|floatformat:2 }}</strong></p>
+    </div>
+    {% if order.customer_note %}<div class="note"><strong>Delivery note:</strong> {{ order.customer_note }}</div>{% endif %}
+    <p class="footer">phoneCase254 · Cases with a point of view.<br>Keep this invoice for your records.</p>
+  </main>
+</body>
+</html>

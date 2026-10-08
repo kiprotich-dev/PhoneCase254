@@ -1,0 +1,37 @@
+{% extends 'shop/base.html' %}
+{% block title %}
+  Contact us — phoneCase254
+  {% endblock %}
+  {% block content %}
+    <main class="auth page narrow">
+      <p class="eyebrow">
+        We’re here to help
+      </p>
+      <h1>
+        Send us a
+        <em>
+          note.
+        </em>
+      </h1>
+      <p>
+        Ask about an order, delivery, sizing, or anything else.
+      </p>
+      <form method="post" class="form-card">
+        {% csrf_token %}
+        <label>
+          Related order (optional)
+          {{ form.order }}
+        </label>
+        <label>
+          Your message
+          {{ form.message }}
+        </label>
+        <button class="button dark full">
+          Send message
+          <span>
+            ↗
+          </span>
+        </button>
+      </form>
+    </main>
+    {% endblock %}

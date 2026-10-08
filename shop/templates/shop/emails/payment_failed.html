@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;background:#f4f1eb;color:#18211d;font-family:Arial,sans-serif;padding:28px 12px;">
+    <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #ded8ce;">
+      <div style="background:#b42318;color:#ffffff;padding:18px 24px;font-size:20px;font-weight:700;letter-spacing:.04em;">
+        PAYMENT UNSUCCESSFUL
+      </div>
+      <div style="padding:26px 24px;">
+        <h1 style="font-size:24px;margin:0 0 16px;">Your order was not placed</h1>
+        <p>Payment for order {{ order.public_reference }} could not be completed, so the order was not confirmed.</p>
+        <p style="padding:14px 16px;background:#fff4e5;border-left:4px solid #f59e0b;"><strong>Reason:</strong> {{ reason }}</p>
+        <p>You can return to checkout and try again, or select <strong>Pay on delivery</strong>.</p>
+      </div>
+      <div style="padding:16px 24px;background:#18211d;color:#ffffff;font-size:12px;">phoneCase254 · Payment notification</div>
+    </div>
+  </body>
+</html>

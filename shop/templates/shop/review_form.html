@@ -1,0 +1,20 @@
+{% extends 'shop/base.html' %}
+{% block title %}Review {{ product.name }} — phoneCase254{% endblock %}
+{% block content %}
+  <main class="page narrow">
+    <p class="eyebrow">Verified purchase</p>
+    <h1>Share your <em>experience.</em></h1>
+    <p class="muted">Review {{ product.name }} and receive 25 loyalty points. You can add a photo if you wish.</p>
+    <form method="post" enctype="multipart/form-data" class="form-card">
+      {% csrf_token %}
+      {% for field in form %}
+        <label>
+          {{ field.label }}
+          {{ field }}
+          {{ field.errors }}
+        </label>
+      {% endfor %}
+      <button class="button dark full" type="submit">Publish review <span>↗</span></button>
+    </form>
+  </main>
+{% endblock %}
