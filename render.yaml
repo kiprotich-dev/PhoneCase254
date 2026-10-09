@@ -41,6 +41,8 @@ services:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
+      - key: CLOUDINARY_URL
+        sync: false
       - key: MPESA_ENVIRONMENT
         value: sandbox
       - key: MPESA_CONSUMER_KEY

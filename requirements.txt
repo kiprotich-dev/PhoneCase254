@@ -5,3 +5,5 @@ requests>=2.31
 dj-database-url>=2.2
 gunicorn>=22.0
 whitenoise[brotli]>=6.7
+cloudinary>=1.44
+django-cloudinary-storage>=0.3
