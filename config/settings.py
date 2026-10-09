@@ -79,27 +79,60 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 REQUIRE_EMAIL_CONFIRMATION = os.environ.get('REQUIRE_EMAIL_CONFIRMATION', 'False') == 'True'
 
-EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_BACKEND = os.environ.get(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST else 'django.core.mail.backends.console.EmailBackend',
-)
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '15'))
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'phonecase254.shop@gmail.com')
-ORDER_NOTIFICATION_EMAIL = os.environ.get('ORDER_NOTIFICATION_EMAIL', 'phonecase254.shop@gmail.com')
-OWNER_PHONE_NUMBER = os.environ.get('OWNER_PHONE_NUMBER', '0727729400')
 
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = os.getenv("EMAIL_HOST")
-# EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-# DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+# ==========================================
+
+# EMAIL CONFIGURATION — SMTP (SAVED FOR LATER)
+
+# ==========================================
+
+# Uncomment this section if you want to return to SMTP in the future.
+
+# EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+# EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+# EMAIL_BACKEND = os.environ.get(
+#     'EMAIL_BACKEND',
+#     'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST else 'django.core.mail.backends.console.EmailBackend',
+# )
+# EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+# EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '15'))
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+# DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'phonecase254.shop@gmail.com')
+# ORDER_NOTIFICATION_EMAIL = os.environ.get('ORDER_NOTIFICATION_EMAIL', 'phonecase254.shop@gmail.com')
+# OWNER_PHONE_NUMBER = os.environ.get('OWNER_PHONE_NUMBER', '0727729400')
+
+# ==========================================
+
+
+# ==========================================
+# EMAIL CONFIGURATION — RESEND API
+# ==========================================
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+
+if RESEND_API_KEY:
+    if 'anymail' not in INSTALLED_APPS:
+        INSTALLED_APPS += ['anymail']
+
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        'RESEND_API_KEY': RESEND_API_KEY,
+    }
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL', 'onboarding@resend.dev'
+)
+ORDER_NOTIFICATION_EMAIL = os.environ.get(
+    'ORDER_NOTIFICATION_EMAIL', 'phonecase254.shop@gmail.com'
+)
+OWNER_PHONE_NUMBER = os.environ.get(
+    'OWNER_PHONE_NUMBER', '0727729400'
+)
+
+# ==========================================
+
 
 # Add your Daraja credentials and phone number when you are ready to connect payments.
 MPESA_PAYBILL_NUMBER = os.environ.get('MPESA_PAYBILL_NUMBER', '174379')
