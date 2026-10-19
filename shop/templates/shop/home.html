@@ -54,6 +54,7 @@
           We think the things you carry every day deserve a little more thought. Our cases are made for protection, but designed for expression.
         </p>
       </section>
+      {% if sale_products %}<section class="sale-spotlight"><div><p class="eyebrow">Limited-time edit</p><h2>Good cases.<br><em>Better prices.</em></h2><p>Catch these offers before they disappear.</p><a class="button dark" href="{% url 'offers' %}">Shop the sale <span>↗</span></a></div><div class="sale-spotlight-grid">{% for product in sale_products|slice:':2' %}<a href="{{ product.get_absolute_url }}"><span class="sale-mini-label">{% if product.offer_type == 'flash_sale' %}Flash sale{% else %}{{ product.discount_percent|floatformat:0 }}% off{% endif %}</span><strong>{{ product.name }}</strong><small>KSh {{ product.sale_price|floatformat:0 }}</small></a>{% endfor %}</div></section>{% endif %}
       <section class="product-section" id="shop">
         <div class="section-heading">
           <div>

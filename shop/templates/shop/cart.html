@@ -36,7 +36,7 @@
                   </h3>
                   <p>
                     KSh
-                    {{ item.product.price|floatformat:0 }}
+                    {% if item.product.offer_active %}<del>{{ item.product.price|floatformat:0 }}</del> {% endif %}{{ item.product.sale_price|floatformat:0 }}
                   </p>
                 </div>
                 <input type="number" name="quantity_{{ item.product.id }}" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}">

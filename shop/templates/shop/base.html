@@ -14,6 +14,9 @@
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
       <link rel="stylesheet" href="{% static 'shop/css/support.css' %}">
+      <link rel="stylesheet" href="{% static 'shop/css/careers.css' %}">
+      <link rel="stylesheet" href="{% static 'shop/css/promotions.css' %}">
+      {% block extra_css %}{% endblock %}
     </head>
     <body>
       <div class="announcement">
@@ -35,11 +38,15 @@
           <a href="{% url 'shop' %}">
             Shop
           </a>
+          <a class="sale-nav-link" href="{% url 'offers' %}">Offers</a>
           <a href="{% url 'home' %}#story">
             Our story
           </a>
           <a href="{% url 'home' %}#journal">
             Journal
+          </a>
+          <a href="{% url 'careers' %}">
+            Careers
           </a>
         </nav>
         <div class="header-actions">
@@ -111,6 +118,9 @@
                     </a>
                     <a href="{% url 'home' %}#story">
                       Our story
+                    </a>
+                    <a href="{% url 'careers' %}">
+                      Careers
                     </a>
                   </div>
                   <div>

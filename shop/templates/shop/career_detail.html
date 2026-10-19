@@ -1,0 +1,14 @@
+{% extends 'shop/base.html' %}
+{% block title %}{{ job.title }} — Careers — phoneCase254{% endblock %}
+{% block content %}
+<main class="page career-detail-page">
+  <a class="text-link" href="{% url 'careers' %}">← All careers</a>
+  <p class="eyebrow career-eyebrow">{{ job.department }} · {{ job.location }}</p>
+  <h1>{{ job.title }}</h1>
+  <p class="career-summary">{{ job.summary }}</p>
+  <div class="career-layout">
+    <article class="career-copy"><h2>About the role</h2><p>{{ job.description|linebreaksbr }}</p><h2>What we’re looking for</h2><p>{{ job.requirements|linebreaksbr }}</p></article>
+    <aside class="career-apply"><p class="eyebrow">{{ job.get_employment_type_display }}{% if job.closing_date %} · Closes {{ job.closing_date|date:'d M Y' }}{% endif %}</p>{% if closed %}<h2>This role is closed.</h2><p class="muted">Please explore our other opportunities.</p>{% else %}<h2>Apply for this role</h2><form method="post" enctype="multipart/form-data" class="form-card">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<label>{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}<button class="button dark full" type="submit">Send application <span>↗</span></button></form>{% endif %}</aside>
+  </div>
+</main>
+{% endblock %}

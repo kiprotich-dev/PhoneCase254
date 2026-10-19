@@ -1,0 +1,9 @@
+{% extends 'shop/base.html' %}
+{% block title %}Offers and flash sales — phoneCase254{% endblock %}
+{% block content %}
+<main class="page offers-page">
+  <div class="offers-heading"><div><p class="eyebrow">Limited-time prices</p><h1>Offers worth <em>noticing.</em></h1><p class="shop-description">Discounts, special offers and flash-sale prices on selected phone cases.</p></div><span class="offer-star offer-star-static">★</span></div>
+  <div class="offer-explainer"><strong>Move quickly.</strong><span>Offers can end at any time and stock is limited.</span></div>
+  <div class="product-grid">{% for product in products %}{% include 'shop/product_card.html' with product=product %}{% empty %}<div class="empty"><p>No active offers right now. Check back soon.</p><a class="button dark" href="{% url 'shop' %}">Shop all cases</a></div>{% endfor %}</div>
+</main>
+{% endblock %}

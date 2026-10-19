@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, ContactMessage, CustomerProfile, Order, OrderItem, Product, ProductReview, Wishlist
+from .models import Category, ContactMessage, CustomerProfile, JobApplication, JobPosting, Order, OrderItem, Product, ProductReview, Wishlist
 
 admin.site.site_header = 'phoneCase254 studio'
 admin.site.site_title = 'phoneCase254 Admin'
@@ -33,6 +33,25 @@ class OrderAdmin(admin.ModelAdmin):
 admin.site.register(CustomerProfile)
 admin.site.register(ContactMessage)
 admin.site.register(OrderItem)
+
+@admin.register(JobPosting)
+class JobPostingAdmin(admin.ModelAdmin):
+    list_display = ('title', 'department', 'employment_type', 'location', 'is_published', 'closing_date', 'created_at')
+    list_filter = ('is_published', 'employment_type', 'department')
+    search_fields = ('title', 'department', 'location', 'summary', 'description')
+    prepopulated_fields = {'slug': ('title',)}
+    fieldsets = (
+        ('Job details', {'fields': ('title', 'slug', 'department', 'employment_type', 'location', 'summary')}),
+        ('Role description', {'fields': ('description', 'requirements')}),
+        ('Publishing', {'fields': ('is_published', 'closing_date')}),
+    )
+
+@admin.register(JobApplication)
+class JobApplicationAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'job', 'email', 'phone', 'created_at')
+    list_filter = ('job', 'created_at')
+    search_fields = ('full_name', 'email', 'phone', 'job__title')
+    readonly_fields = ('created_at',)
 
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):

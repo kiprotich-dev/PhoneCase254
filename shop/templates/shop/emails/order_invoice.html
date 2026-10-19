@@ -13,6 +13,8 @@
     h1 { font: 500 34px Georgia, serif; margin: 32px 0 8px; }
     h1 em { color: #9c6e58; }
     .meta, .address { color: #666; font-size: 13px; line-height: 1.6; }
+    .status-box { display: flex; flex-wrap: wrap; gap: 10px 22px; background: #eef7f1; border-left: 4px solid #16a66b; padding: 12px 14px; margin: 18px 0; color: #1e2420; font-size: 12px; }
+    .status-box span { color: #555; }
     table { width: 100%; border-collapse: collapse; margin: 28px 0; }
     th { color: #777; font-size: 11px; letter-spacing: .1em; text-align: left; text-transform: uppercase; }
     th:last-child, td:last-child { text-align: right; }
@@ -32,7 +34,8 @@
       <div class="label">Order invoice<br>{{ order.public_reference }}</div>
     </div>
     <h1>Thank you for your <em>order.</em></h1>
-    <p class="meta">Placed {{ order.created_at|date:'d M Y, H:i' }} · {{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</p>
+    <p class="meta">Placed {{ order.created_at|date:'d M Y, H:i' }} · {{ order.get_payment_method_display }}</p>
+    <div class="status-box"><strong>Payment: {{ order.get_payment_status_display }}</strong><span>Order: {{ order.get_status_display }}</span>{% if order.mpesa_receipt %}<span>M-Pesa transaction code: {{ order.mpesa_receipt }}</span>{% endif %}</div>
     <p class="label">Customer</p>
     <p class="address">{{ order.full_name }}<br>{{ customer_email }}<br>{{ order.phone }}<br>{{ order.delivery_address }}</p>
     <table>

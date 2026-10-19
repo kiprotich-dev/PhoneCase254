@@ -1,0 +1,19 @@
+{% extends 'shop/base.html' %}
+{% block title %}Careers — phoneCase254{% endblock %}
+{% block content %}
+<main class="page careers-page">
+  <p class="eyebrow">Work with us</p>
+  <h1>Build the future of <em>everyday style.</em></h1>
+  <p class="careers-intro">We are a growing Kenyan accessories brand looking for thoughtful, energetic people who care about great products and great customer experiences.</p>
+  <section class="job-list">
+    {% for job in jobs %}
+      <a class="job-card" href="{% url 'career_detail' job.slug %}">
+        <div><p class="eyebrow">{{ job.department }}</p><h2>{{ job.title }}</h2><p>{{ job.summary }}</p></div>
+        <div class="job-meta"><span>{{ job.get_employment_type_display }}</span><span>{{ job.location }}</span>{% if job.closing_date %}<span>Closes {{ job.closing_date|date:'d M Y' }}</span>{% endif %}<b>View role ↗</b></div>
+      </a>
+    {% empty %}
+      <div class="empty"><p>There are no open positions right now.</p><a class="button dark" href="{% url 'contact' %}">Send us your details</a></div>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

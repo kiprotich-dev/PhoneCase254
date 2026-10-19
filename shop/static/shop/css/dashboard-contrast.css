@@ -1,0 +1,13 @@
+.metric-card.blue{color:#1685ff;background:linear-gradient(135deg,#0a2d58,#0a2140)}
+.metric-card.green{color:#09d58b;background:linear-gradient(135deg,#083c42,#0a2140)}
+.metric-card.purple{color:#743cff;background:linear-gradient(135deg,#211b5b,#0a2140)}
+.metric-card.red{color:#ff4762;background:linear-gradient(135deg,#431d3d,#0a2140)}
+.metric-card.orange{color:#ffab0b;background:linear-gradient(135deg,#4a3210,#0a2140)}
+.metric-card .metric-icon{background:currentColor;color:#fff}
+.metric-card p{color:#b7c9e2}
+.metric-card strong{color:#f2f7ff}
+.dashboard-product-image{border:1px solid #235080;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.table-product-cell{display:flex;align-items:center;gap:10px}
+.table-product-cell .dashboard-product-image{flex:0 0 39px}
+.report-export-panel{max-width:900px}.report-format-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.report-format{display:grid;gap:7px;min-height:120px;padding:18px;border:1px solid #235080;border-radius:8px;background:#0b2a50;color:#dcecff;transition:transform .15s,background .15s}.report-format:hover{transform:translateY(-3px);background:#123e70}.report-format strong{font-size:20px;color:#fff}.report-format span{font-size:10px;color:#9bb4d4}.report-format:last-child strong{color:#54aaff}@media(max-width:800px){.report-format-grid{grid-template-columns:repeat(2,1fr)}}
+.report-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:18px}.report-preview-panel{margin-bottom:18px}.report-preview-panel .table-wrap{max-height:520px;overflow:auto}@media(max-width:600px){.report-summary-grid{grid-template-columns:1fr}}

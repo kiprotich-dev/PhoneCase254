@@ -1,5 +1,9 @@
 from decimal import Decimal
+import io
 import json
+import os
+import zipfile
+from xml.sax.saxutils import escape
 from datetime import timedelta
 from django.conf import settings
 import logging
@@ -10,7 +14,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -20,8 +24,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils import timezone
 from django.contrib.auth.tokens import default_token_generator
-from .forms import CheckoutForm, ContactForm, DashboardProductForm, ProductReviewForm, SignUpForm
-from .models import Category, ContactMessage, CustomerProfile, Order, OrderItem, Product, ProductReview, Wishlist
+from .forms import CheckoutForm, ContactForm, DashboardOfferForm, DashboardProductForm, JobApplicationForm, ProductReviewForm, SignUpForm
+from .models import Category, ContactMessage, CustomerProfile, JobPosting, Order, OrderItem, Product, ProductReview, Wishlist
 from .services.mpesa import initiate_stk_push, query_stk_push
 from .services.invoice import build_invoice_pdf
 
@@ -39,7 +43,7 @@ staff_required = user_passes_test(lambda user: user.is_active and user.is_staff,
 def dashboard(request):
     today = timezone.localdate()
     start_of_month = today.replace(day=1)
-    orders = Order.objects.select_related('user').prefetch_related('items__product')
+    orders = Order.objects.filter(payment_status__in=['paid', 'on_delivery']).select_related('user').prefetch_related('items__product')
     paid_orders = orders.filter(payment_status='paid')
     recent_orders = orders.order_by('-created_at')[:6]
     low_stock = Product.objects.filter(stock__lte=5).order_by('stock', 'name')
@@ -47,13 +51,24 @@ def dashboard(request):
     top_products = Product.objects.annotate(
         units_sold=Sum('orderitem__quantity', filter=Q(orderitem__order__payment_status='paid'))
     ).order_by('-units_sold', 'name')[:5]
+    movement_since = timezone.now() - timedelta(days=30)
+    movement_products = list(Product.objects.annotate(units_sold_30d=Sum('orderitem__quantity', filter=Q(orderitem__order__payment_status='paid', orderitem__order__created_at__gte=movement_since))).order_by('-units_sold_30d', 'name'))
+    movement_fast = [product for product in movement_products if (product.units_sold_30d or 0) >= 10][:5]
+    movement_slow = [product for product in movement_products if 0 < (product.units_sold_30d or 0) < 10][:5]
+    movement_death = [product for product in movement_products if not product.units_sold_30d and product.stock > 0][:5]
     recent_customers = User.objects.filter(is_staff=False).order_by('-date_joined')[:5]
     month_orders = orders.filter(created_at__date__gte=start_of_month)
     month_paid_orders = paid_orders.filter(created_at__date__gte=start_of_month)
+    sales_series = []
+    for days_ago in range(89, -1, -1):
+        sale_date = today - timedelta(days=days_ago)
+        daily = paid_orders.filter(created_at__date=sale_date).aggregate(total=Sum('total'), orders=Count('id'))
+        sales_series.append({'date': sale_date.strftime('%b %d').replace(' 0', ' '), 'sales': float(daily['total'] or 0), 'orders': daily['orders'] or 0})
     month_revenue = month_paid_orders.aggregate(total=Sum('total'))['total'] or Decimal('0')
     total_revenue = paid_orders.aggregate(total=Sum('total'))['total'] or Decimal('0')
     status_counts = {key: orders.filter(status=key).count() for key, label in Order.STATUS_CHOICES}
     stock_total = Product.objects.aggregate(total=Sum('stock'))['total'] or 0
+    inventory_value = Product.objects.aggregate(total=Sum(F('price') * F('stock')))['total'] or Decimal('0')
     activity = []
     for order in orders.order_by('-created_at')[:3]:
         activity.append({'kind': 'order', 'label': 'New order', 'detail': order.public_reference, 'time': order.created_at})
@@ -77,12 +92,100 @@ def dashboard(request):
         'recent_customers': recent_customers,
         'status_counts': status_counts,
         'stock_total': stock_total,
+        'inventory_value': inventory_value,
         'activity': activity[:6],
+        'sales_series': sales_series,
+        'movement_fast': movement_fast,
+        'movement_slow': movement_slow,
+        'movement_death': movement_death,
     })
 
 @staff_required
+def dashboard_report_export(request):
+    report_rows = list(Order.objects.filter(payment_status__in=['paid', 'on_delivery']).select_related('user').order_by('-created_at'))
+    export_format = request.GET.get('format', 'csv').lower()
+    if export_format == 'pdf':
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+        output = io.BytesIO()
+        document = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=28, leftMargin=28, topMargin=28, bottomMargin=28)
+        styles = getSampleStyleSheet()
+        data = [['Order', 'Customer', 'Payment', 'Status', 'Total', 'Created']]
+        data += [[o.public_reference, o.full_name, o.get_payment_status_display(), o.get_status_display(), f'KSh {o.total:,.0f}', o.created_at.strftime('%d %b %Y %H:%M')] for o in report_rows]
+        table = Table(data, repeatRows=1)
+        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#123c70')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white), ('GRID', (0, 0), (-1, -1), .25, colors.HexColor('#d9e2ef')), ('FONTSIZE', (0, 0), (-1, -1), 8), ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f4f8fc')])]))
+        document.build([Paragraph('phoneCase254 sales report', styles['Title']), table])
+        response = HttpResponse(output.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="phoneCase254-sales-report.pdf"'
+        return response
+    if export_format == 'xlsx':
+        def cell(value, reference):
+            return f'<c r="{reference}" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>'
+        rows = [['Order', 'Customer', 'Email', 'Payment', 'Status', 'Total', 'Created']]
+        rows += [[o.public_reference, o.full_name, o.user.email, o.get_payment_status_display(), o.get_status_display(), o.total, o.created_at.strftime('%Y-%m-%d %H:%M')] for o in report_rows]
+        sheet_rows = ''.join(f'<row r="{row_number}">' + ''.join(cell(value, f'{column}{row_number}') for column, value in zip('ABCDEFG', values)) + '</row>' for row_number, values in enumerate(rows, 1))
+        workbook_files = {'[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>', '_rels/.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>', 'xl/workbook.xml': '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Orders" sheetId="1" r:id="rId1"/></sheets></workbook>', 'xl/_rels/workbook.xml.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>', 'xl/worksheets/sheet1.xml': f'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>{sheet_rows}</sheetData></worksheet>'}
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
+            for filename, content in workbook_files.items(): archive.writestr(filename, content)
+        response = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="phoneCase254-sales-report.xlsx"'
+        return response
+    if export_format == 'xml':
+        xml_rows = ''.join(f'<order><reference>{escape(o.public_reference)}</reference><customer>{escape(o.full_name)}</customer><email>{escape(o.user.email)}</email><payment>{escape(o.get_payment_status_display())}</payment><status>{escape(o.get_status_display())}</status><total>{o.total}</total><created>{o.created_at.isoformat()}</created></order>' for o in report_rows)
+        response = HttpResponse(f'<?xml version="1.0" encoding="UTF-8"?><sales_report>{xml_rows}</sales_report>', content_type='application/xml')
+        response['Content-Disposition'] = 'attachment; filename="phoneCase254-sales-report.xml"'
+        return response
+    if export_format == 'png':
+        from PIL import Image, ImageDraw
+        image = Image.new('RGB', (1200, max(420, 180 + len(report_rows) * 28)), '#071b35')
+        draw = ImageDraw.Draw(image)
+        draw.text((42, 30), 'phoneCase254 sales report', fill='#ffffff')
+        draw.text((42, 65), f'{len(report_rows)} orders · KSh {sum((o.total for o in report_rows), Decimal("0")):,.0f}', fill='#54aaff')
+        y = 120
+        for order in report_rows:
+            draw.text((42, y), f'{order.public_reference}   {order.full_name[:28]}   KSh {order.total:,.0f}   {order.get_status_display()}', fill='#dcecff')
+            y += 28
+        output = io.BytesIO(); image.save(output, format='PNG')
+        response = HttpResponse(output.getvalue(), content_type='image/png')
+        response['Content-Disposition'] = 'attachment; filename="phoneCase254-sales-report.png"'
+        return response
+    import csv
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="phoneCase254-sales-report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Order reference', 'Customer', 'Email', 'Payment status', 'Order status', 'Subtotal', 'Delivery fee', 'Total', 'Created'])
+    for order in report_rows:
+        writer.writerow([order.public_reference, order.full_name, order.user.email, order.get_payment_status_display(), order.get_status_display(), order.subtotal, order.delivery_fee, order.total, order.created_at.strftime('%Y-%m-%d %H:%M')])
+    return response
+
+@staff_required
+def dashboard_reports(request):
+    report_orders = Order.objects.filter(payment_status__in=['paid', 'on_delivery']).select_related('user').order_by('-created_at')
+    summary = report_orders.aggregate(total=Sum('total'), orders=Count('id'))
+    return render(request, 'shop/dashboard_reports.html', {'report_orders': report_orders, 'report_total': summary['total'] or Decimal('0'), 'report_count': summary['orders'] or 0})
+
+@staff_required
+def dashboard_settings(request):
+    return render(request, 'shop/dashboard_settings.html', {'mpesa_environment': settings.MPESA_ENVIRONMENT, 'callback_configured': settings.MPESA_CALLBACK_URL.startswith('https://') and 'your-public-domain' not in settings.MPESA_CALLBACK_URL, 'cloudinary_configured': bool(os.environ.get('CLOUDINARY_URL')), 'support_phone': settings.SUPPORT_PHONE, 'support_email': settings.SUPPORT_EMAIL})
+
+@staff_required
+def dashboard_search(request):
+    query = request.GET.get('q', '').strip()
+    products = Product.objects.none()
+    orders = Order.objects.none()
+    customers = User.objects.none()
+    if query:
+        products = Product.objects.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(category__name__icontains=query)).select_related('category')[:25]
+        orders = Order.objects.filter(payment_status__in=['paid', 'on_delivery']).filter(Q(public_reference__icontains=query) | Q(full_name__icontains=query) | Q(phone__icontains=query) | Q(mpesa_receipt__icontains=query) | Q(user__email__icontains=query)).select_related('user').order_by('-created_at')[:25]
+        customers = User.objects.filter(Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(email__icontains=query), is_staff=False)[:25]
+    return render(request, 'shop/dashboard_search.html', {'query': query, 'products': products, 'orders': orders, 'customers': customers})
+
+@staff_required
 def dashboard_products(request):
-    return render(request, 'shop/dashboard_list.html', {'section': 'Products', 'description': 'Manage your case catalogue and product photos.', 'products': Product.objects.select_related('category').order_by('name')})
+    return render(request, 'shop/dashboard_list.html', {'section': 'Products', 'description': 'Manage your case catalogue, product photos, and offers.', 'products': Product.objects.select_related('category').order_by('name'), 'offer_choices': Product.OFFER_TYPES})
 
 @staff_required
 def dashboard_product_add(request):
@@ -94,8 +197,40 @@ def dashboard_product_add(request):
     return render(request, 'shop/dashboard_product_form.html', {'form': form})
 
 @staff_required
+@require_POST
+def dashboard_offer_update(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+    form = DashboardOfferForm(request.POST, instance=product)
+    if form.is_valid():
+        offer = form.save(commit=False)
+        if offer.offer_type == 'none':
+            offer.discount_percent = 0
+            offer.offer_ends_at = None
+        offer.save(update_fields=['offer_type', 'discount_percent', 'offer_ends_at'])
+        messages.success(request, f'{product.name} offer updated.')
+    else:
+        messages.error(request, f'Offer could not be updated for {product.name}. Check the discount and end date.')
+    return redirect(request.POST.get('next') or 'dashboard_products')
+
+@staff_required
 def dashboard_orders(request):
-    return render(request, 'shop/dashboard_list.html', {'section': 'Orders', 'description': 'Review payments, fulfilment status, and customer details.', 'orders': Order.objects.select_related('user').prefetch_related('items__product').order_by('-created_at')})
+    return render(request, 'shop/dashboard_list.html', {'section': 'Orders', 'description': 'Review paid and pay-on-delivery purchases.', 'orders': Order.objects.filter(payment_status__in=['paid', 'on_delivery']).select_related('user').prefetch_related('items__product').order_by('-created_at'), 'status_choices': Order.STATUS_CHOICES})
+
+@staff_required
+@require_POST
+def dashboard_order_status_update(request, order_id):
+    order = get_object_or_404(Order, pk=order_id, payment_status__in=['paid', 'on_delivery'])
+    new_status = request.POST.get('status', '')
+    valid_statuses = {value for value, label in Order.STATUS_CHOICES}
+    if new_status not in valid_statuses:
+        messages.error(request, 'That order status is not valid.')
+    elif new_status == order.status:
+        messages.info(request, f'{order.public_reference} is already marked {order.get_status_display().lower()}.')
+    else:
+        order.status = new_status
+        order.save(update_fields=['status'])
+        messages.success(request, f'{order.public_reference} updated to {order.get_status_display()}.')
+    return redirect(request.POST.get('next') or 'dashboard_orders')
 
 @staff_required
 def dashboard_customers(request):
@@ -106,6 +241,20 @@ def dashboard_inventory(request):
     return render(request, 'shop/dashboard_list.html', {'section': 'Inventory', 'description': 'Monitor stock levels and identify products that need attention.', 'inventory': Product.objects.select_related('category').order_by('stock', 'name')})
 
 @staff_required
+@require_POST
+def dashboard_stock_update(request, product_id):
+    try:
+        change = int(request.POST.get('change', '0'))
+    except (TypeError, ValueError):
+        change = 0
+    change = max(-1000, min(change, 1000))
+    product = get_object_or_404(Product, pk=product_id)
+    product.stock = max(0, product.stock + change)
+    product.save(update_fields=['stock'])
+    messages.success(request, f'{product.name} stock updated to {product.stock} units.')
+    return redirect('dashboard_inventory')
+
+@staff_required
 def dashboard_messages(request):
     return render(request, 'shop/dashboard_list.html', {'section': 'Messages', 'description': 'Read customer questions and order-related communication.', 'contact_messages': ContactMessage.objects.select_related('user', 'order').order_by('-created_at')})
 
@@ -114,7 +263,25 @@ def logout_user(request):
     return redirect('home')
 
 def home(request):
-    return render(request, 'shop/home.html', {'featured': Product.objects.filter(is_featured=True)[:4], 'new_arrivals': Product.objects.order_by('-created_at')[:8]})
+    sale_products = Product.objects.filter(offer_type__in=['offer', 'flash_sale'], discount_percent__gt=0, stock__gt=0).filter(Q(offer_ends_at__isnull=True) | Q(offer_ends_at__gte=timezone.now())).order_by('-discount_percent', 'name')[:4]
+    return render(request, 'shop/home.html', {'featured': Product.objects.filter(is_featured=True)[:4], 'new_arrivals': Product.objects.order_by('-created_at')[:8], 'sale_products': sale_products})
+
+def careers(request):
+    jobs = JobPosting.objects.filter(is_published=True).filter(Q(closing_date__isnull=True) | Q(closing_date__gte=timezone.localdate()))
+    return render(request, 'shop/careers.html', {'jobs': jobs})
+
+def career_detail(request, slug):
+    job = get_object_or_404(JobPosting, slug=slug, is_published=True)
+    closed = bool(job.closing_date and job.closing_date < timezone.localdate())
+    form = JobApplicationForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and not closed and form.is_valid():
+        application = form.save(commit=False)
+        application.job = job
+        application.save()
+        send_mail(f'New job application: {job.title}', f'{application.full_name} applied for {job.title}. Email: {application.email}.', settings.DEFAULT_FROM_EMAIL, [settings.SUPPORT_EMAIL], fail_silently=True)
+        messages.success(request, 'Your application has been received. Thank you for your interest in phoneCase254.')
+        return redirect('career_detail', slug=job.slug)
+    return render(request, 'shop/career_detail.html', {'job': job, 'form': form, 'closed': closed})
 
 def shop(request):
     products = Product.objects.all().select_related('category')
@@ -122,7 +289,12 @@ def shop(request):
     query = request.GET.get('q', '').strip()
     if category: products = products.filter(category__slug=category)
     if query: products = products.filter(name__icontains=query)
-    return render(request, 'shop/shop.html', {'products': products, 'active_category': category, 'query': query})
+    sale_products = Product.objects.filter(offer_type__in=['offer', 'flash_sale'], discount_percent__gt=0, stock__gt=0).filter(Q(offer_ends_at__isnull=True) | Q(offer_ends_at__gte=timezone.now())).order_by('-discount_percent', 'name')[:4]
+    return render(request, 'shop/shop.html', {'products': products, 'active_category': category, 'query': query, 'sale_products': sale_products})
+
+def offers(request):
+    products = Product.objects.filter(offer_type__in=['offer', 'flash_sale'], discount_percent__gt=0, stock__gt=0).filter(Q(offer_ends_at__isnull=True) | Q(offer_ends_at__gte=timezone.now())).select_related('category').order_by('-offer_type', '-discount_percent', 'name')
+    return render(request, 'shop/offers.html', {'products': products})
 
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
@@ -142,7 +314,7 @@ def _cart_items(request):
             unavailable.append(product.name)
             continue
         quantity = min(int(cart.get(str(product.pk), 1)), product.stock)
-        line_total = product.price * quantity
+        line_total = product.sale_price * quantity
         items.append({'product': product, 'quantity': quantity, 'line_total': line_total})
         total += line_total
     if unavailable:
@@ -360,8 +532,8 @@ def checkout(request):
                 product.stock -= item['quantity']
                 product.save(update_fields=['stock'])
             order_data = {key: value for key, value in form.cleaned_data.items() if key != 'redeem_points'}
-            order = Order.objects.create(user=request.user, subtotal=subtotal, item_discount=item_discount, delivery_discount=delivery_discount, delivery_fee=delivery_fee, points_redeemed=points_redeemed, points_discount=points_discount, total=total, **order_data)
-            for item in items: OrderItem.objects.create(order=order, product=item['product'], quantity=item['quantity'], price=item['product'].price)
+            order = Order.objects.create(user=request.user, payment_status='on_delivery' if payment_method == 'cod' else 'pending', status='queue', subtotal=subtotal, item_discount=item_discount, delivery_discount=delivery_discount, delivery_fee=delivery_fee, points_redeemed=points_redeemed, points_discount=points_discount, total=total, **order_data)
+            for item in items: OrderItem.objects.create(order=order, product=item['product'], quantity=item['quantity'], price=item['product'].sale_price)
             if points_redeemed:
                 locked_profile.loyalty_points -= points_redeemed
                 locked_profile.save(update_fields=['loyalty_points'])
@@ -401,13 +573,23 @@ def order_success(request, order_id):
 @login_required
 def orders(request):
     profile, _ = CustomerProfile.objects.get_or_create(user=request.user)
-    return render(request, 'shop/orders.html', {'orders': request.user.orders.order_by('-created_at'), 'profile': profile})
+    visible_orders = request.user.orders.filter(payment_status__in=['paid', 'on_delivery']).order_by('-created_at')
+    return render(request, 'shop/orders.html', {'orders': visible_orders, 'profile': profile})
 
 @login_required
 def order_detail(request, order_id):
-    order = get_object_or_404(request.user.orders, pk=order_id)
-    can_cancel = order.status == 'pending' and order.payment_status == 'pending' and not order.mpesa_checkout_request_id and timezone.now() < order.created_at + timedelta(minutes=3)
+    order = get_object_or_404(request.user.orders.filter(payment_status__in=['paid', 'on_delivery']), pk=order_id)
+    can_cancel = order.status == 'queue' and order.payment_status in ('pending', 'on_delivery') and not order.mpesa_checkout_request_id and timezone.now() < order.created_at + timedelta(minutes=3)
     return render(request, 'shop/order_detail.html', {'order': order, 'can_cancel': can_cancel})
+
+@login_required
+def track_order(request, order_id):
+    order = get_object_or_404(
+        request.user.orders.filter(payment_status__in=['paid', 'on_delivery']).prefetch_related('items__product', 'status_updates'),
+        pk=order_id,
+    )
+    updates = list(order.status_updates.all())
+    return render(request, 'shop/order_tracking.html', {'order': order, 'updates': updates})
 
 @login_required
 def invoice_download(request, order_id):
@@ -415,7 +597,7 @@ def invoice_download(request, order_id):
     if request.user.is_staff:
         order = get_object_or_404(order_query, pk=order_id)
     else:
-        order = get_object_or_404(order_query, pk=order_id, user=request.user)
+        order = get_object_or_404(order_query, pk=order_id, user=request.user, payment_status__in=['paid', 'on_delivery'])
     items = [{'product': item.product, 'quantity': item.quantity, 'line_total': item.line_total} for item in order.items.all()]
     pdf = build_invoice_pdf(order, items, order.user.email)
     response = HttpResponse(pdf, content_type='application/pdf')
@@ -431,11 +613,11 @@ def _apply_mpesa_query_result(order_id, result_code, result_desc=''):
         newly_failed = result_code != '0' and order.payment_status == 'pending'
         order.mpesa_result_code = result_code
         if result_code == '0':
-            order.status = 'confirmed'
+            order.status = 'queue'
             order.payment_status = 'paid'
             profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
             profile.record_payment(order)
-        elif newly_failed and order.status == 'pending':
+        elif newly_failed and order.status == 'queue':
             for item in order.items.all():
                 product = Product.objects.select_for_update().get(pk=item.product_id)
                 product.stock += item.quantity
@@ -479,7 +661,7 @@ def order_status(request, order_id):
 def cancel_order(request, order_id):
     with transaction.atomic():
         order = get_object_or_404(request.user.orders.select_for_update().prefetch_related('items__product'), pk=order_id)
-        if order.status != 'pending' or order.payment_status != 'pending' or order.mpesa_checkout_request_id or timezone.now() >= order.created_at + timedelta(minutes=3):
+        if order.status != 'queue' or order.payment_status not in ('pending', 'on_delivery') or order.mpesa_checkout_request_id or timezone.now() >= order.created_at + timedelta(minutes=3):
             messages.error(request, 'This order can no longer be cancelled online.')
             return redirect('order_detail', order.id)
         for item in order.items.all():
@@ -575,12 +757,12 @@ def mpesa_callback(request):
                 if result_code == '0':
                     metadata = {item.get('Name'): item.get('Value') for item in callback.get('CallbackMetadata', {}).get('Item', [])}
                     order.mpesa_receipt = str(metadata.get('MpesaReceiptNumber', ''))
-                    order.status = 'confirmed'
+                    order.status = 'queue'
                     order.payment_status = 'paid'
                     profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
                     profile.record_payment(order)
                 else:
-                    if newly_failed and order.status == 'pending':
+                    if newly_failed and order.status == 'queue':
                         for item in order.items.all():
                             product = Product.objects.select_for_update().get(pk=item.product_id)
                             product.stock += item.quantity

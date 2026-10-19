@@ -22,6 +22,7 @@
           Made for wherever the day takes you.
         </p>
       </div>
+      {% if sale_products %}<section class="shop-sale-banner"><div><span class="sale-kicker">Offers live now</span><h2>Limited-time prices on selected cases.</h2></div><a class="text-link" href="#offers">Jump to offers ↓</a></section><div id="offers" class="product-grid sale-grid">{% for product in sale_products %}{% include 'shop/product_card.html' with product=product %}{% endfor %}</div>{% endif %}
       <div class="filters">
         <a class="{% if not active_category %}selected{% endif %}" href="{% url 'shop' %}">
           All cases

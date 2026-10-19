@@ -10,11 +10,13 @@
         </span>
       </div>
       {% endif %}
+      {% if product.offer_active and product.stock > 0 %}<span class="offer-star" aria-label="Special offer" title="Special offer">★</span>{% endif %}
       {% if product.is_featured %}
         <span class="tag">
           Favourite
         </span>
         {% endif %}
+        {% if product.offer_active %}<span class="sale-ribbon {% if product.offer_type == 'flash_sale' %}flash-ribbon{% endif %}">{% if product.offer_type == 'flash_sale' %}Flash sale{% else %}{{ product.discount_percent|floatformat:0 }}% off{% endif %}</span>{% endif %}
         {% if product.stock < 1 %}
           <span class="tag sold-out">
             Sold out
@@ -32,10 +34,7 @@
               {{ product.category.name|default:'Phone case' }}
             </p>
           </div>
-          <strong>
-            KSh
-            {{ product.price|floatformat:0 }}
-          </strong>
+          <strong>{% if product.offer_active %}<del>KSh {{ product.price|floatformat:0 }}</del> <span class="sale-price">KSh {{ product.sale_price|floatformat:0 }}</span>{% else %}KSh {{ product.price|floatformat:0 }}{% endif %}</strong>
         </div>
         {% if product.stock > 0 %}
           <form method="post" action="{% url 'add_to_cart' product.id %}">

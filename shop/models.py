@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -12,7 +13,45 @@ class Category(models.Model):
         super().save(*args, **kwargs)
     def __str__(self): return self.name
 
+class JobPosting(models.Model):
+    EMPLOYMENT_TYPES = [('full_time', 'Full time'), ('part_time', 'Part time'), ('contract', 'Contract'), ('internship', 'Internship')]
+    title = models.CharField(max_length=160)
+    slug = models.SlugField(unique=True, blank=True)
+    department = models.CharField(max_length=100)
+    location = models.CharField(max_length=120, default='Nairobi, Kenya')
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPES, default='full_time')
+    summary = models.CharField(max_length=240)
+    description = models.TextField()
+    requirements = models.TextField(help_text='Add one requirement per line.')
+    closing_date = models.DateField(null=True, blank=True)
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.slug: self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self): return self.title
+
+class JobApplication(models.Model):
+    job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='applications')
+    full_name = models.CharField(max_length=160)
+    email = models.EmailField()
+    phone = models.CharField(max_length=30)
+    cover_letter = models.TextField()
+    resume = models.FileField(upload_to='job-applications/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self): return f'{self.full_name} · {self.job.title}'
+
 class Product(models.Model):
+    OFFER_TYPES = [('none', 'No offer'), ('offer', 'Offer'), ('flash_sale', 'Flash sale')]
     name = models.CharField(max_length=160)
     slug = models.SlugField(unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
@@ -23,11 +62,21 @@ class Product(models.Model):
     accent = models.CharField(max_length=7, default='#e7d9ca', help_text='Fallback card colour, e.g. #e7d9ca')
     is_featured = models.BooleanField(default=False)
     stock = models.PositiveIntegerField(default=25)
+    offer_type = models.CharField(max_length=20, choices=OFFER_TYPES, default='none')
+    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    offer_ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     def save(self, *args, **kwargs):
         if not self.slug: self.slug = slugify(self.name)
         super().save(*args, **kwargs)
     def get_absolute_url(self): return reverse('product_detail', args=[self.slug])
+    @property
+    def offer_active(self):
+        return self.offer_type != 'none' and self.discount_percent > 0 and (not self.offer_ends_at or self.offer_ends_at > timezone.now())
+    @property
+    def sale_price(self):
+        if not self.offer_active: return self.price
+        return (self.price * (Decimal('1') - self.discount_percent / Decimal('100'))).quantize(Decimal('0.01'))
     def __str__(self): return self.name
 
 class Wishlist(models.Model):
@@ -83,9 +132,9 @@ class CustomerProfile(models.Model):
         order.save(update_fields=['loyalty_awarded'])
 
 class Order(models.Model):
-    STATUS_CHOICES = [('pending', 'Pending payment'), ('confirmed', 'Confirmed'), ('packed', 'Packed'), ('shipped', 'Shipped'), ('delivered', 'Delivered'), ('cancelled', 'Cancelled')]
+    STATUS_CHOICES = [('queue', 'On queue'), ('shipping', 'Shipping'), ('shipped', 'Shipped'), ('delivered', 'Delivered'), ('returned', 'Returned'), ('cancelled', 'Cancelled')]
     PAYMENT_METHODS = [('prepaid', 'Pay before delivery'), ('cod', 'Pay on delivery')]
-    PAYMENT_STATUSES = [('pending', 'Pending payment'), ('paid', 'Paid'), ('failed', 'Failed')]
+    PAYMENT_STATUSES = [('paid', 'Paid'), ('on_delivery', 'To be paid on delivery'), ('pending', 'Awaiting payment'), ('failed', 'Failed')]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
     public_reference = models.CharField(max_length=32, unique=True, blank=True)
     full_name = models.CharField(max_length=160)
@@ -106,7 +155,7 @@ class Order(models.Model):
     points_redeemed = models.PositiveIntegerField(default=0)
     points_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='queue')
     created_at = models.DateTimeField(auto_now_add=True)
     def save(self, *args, **kwargs):
         is_new = self.pk is None
@@ -115,6 +164,17 @@ class Order(models.Model):
             self.public_reference = f'PC254-{self.created_at:%Y%m%d}-{self.pk:04d}'
             super().save(update_fields=['public_reference'])
     def __str__(self): return f'{self.public_reference or self.pk} - {self.full_name}'
+
+class OrderStatusUpdate(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_updates')
+    status = models.CharField(max_length=20, choices=Order.STATUS_CHOICES)
+    note = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self): return f'{self.order.public_reference} · {self.get_status_display()}'
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

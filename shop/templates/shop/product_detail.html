@@ -32,10 +32,7 @@
             <h1>
               {{ product.name }}
             </h1>
-            <p class="price">
-              KSh
-              {{ product.price|floatformat:0 }}
-            </p>
+            <p class="price">{% if product.offer_active %}<del>KSh {{ product.price|floatformat:0 }}</del> KSh {{ product.sale_price|floatformat:0 }} <span class="offer-badge">{{ product.discount_percent|floatformat:0 }}% off</span>{% else %}KSh {{ product.price|floatformat:0 }}{% endif %}</p>
             <p>
               {{ product.description }}
             </p>

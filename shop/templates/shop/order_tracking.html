@@ -1,0 +1,45 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+{% block title %}Track {{ order.public_reference }} — phoneCase254{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'shop/css/tracking.css' %}">{% endblock %}
+{% block content %}
+  <main class="page narrow tracking-page">
+    <p class="eyebrow">Order tracking</p>
+    <h1>Your order is <em>{{ order.get_status_display|lower }}.</em></h1>
+    <p class="muted">{{ order.public_reference }} · {{ order.created_at|date:'d M Y, H:i' }}</p>
+
+    <section class="tracking-card">
+      <div class="tracking-head">
+        <div><strong>Delivery progress</strong><p class="muted">We’ll update this timeline as your order moves.</p></div>
+        <span class="status">{{ order.get_status_display }}</span>
+      </div>
+      <div class="tracking-timeline">
+        {% for update in updates %}
+          <div class="tracking-step {% if forloop.last %}current{% else %}complete{% endif %}">
+            <span class="tracking-dot"></span>
+            <div><strong>{{ update.get_status_display }}</strong><small>{{ update.created_at|date:'d M Y, H:i' }}</small>{% if update.note %}<p>{{ update.note }}</p>{% endif %}</div>
+          </div>
+        {% empty %}
+          <p class="muted">Tracking will appear here as your order is processed.</p>
+        {% endfor %}
+      </div>
+      <p class="muted">Payment: <strong>{{ order.get_payment_status_display }}</strong>{% if order.mpesa_receipt %} · M-Pesa code: <strong>{{ order.mpesa_receipt }}</strong>{% endif %}</p>
+    </section>
+
+    <section class="tracking-card tracking-items">
+      <h2>Your items</h2>
+      {% for item in order.items.all %}
+        <div class="tracking-item">
+          {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">{% else %}<div class="tracking-item-placeholder">{{ item.product.name|first }}</div>{% endif %}
+          <div><strong>{{ item.product.name }}</strong><small>{{ item.quantity }} × KSh {{ item.price|floatformat:0 }}</small></div>
+          <b>KSh {{ item.line_total|floatformat:0 }}</b>
+        </div>
+      {% endfor %}
+    </section>
+
+    <div class="tracking-actions">
+      <a class="button dark" href="{% url 'invoice_download' order.id %}">Download invoice <span>↓</span></a>
+      <a class="wishlist-button" href="{% url 'order_detail' order.id %}">View order details</a>
+    </div>
+  </main>
+{% endblock %}

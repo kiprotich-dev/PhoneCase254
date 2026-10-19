@@ -28,7 +28,7 @@
     </div>
     <p class="muted loyalty-note">Earn 5 points for every purchased item priced above KSh 500. Reviews earn 25 points.</p>
     {% for order in orders %}
-      <a class="order-row" href="{% url 'order_detail' order.id %}">
+      <div class="order-row">
         <span>
           #
           {{ order.public_reference }}
@@ -42,7 +42,9 @@
         <span class="status">
           {{ order.get_status_display }}
         </span>
-      </a>
+        <a class="text-link" href="{% url 'track_order' order.id %}">Track delivery</a>
+        <a class="text-link" href="{% url 'order_detail' order.id %}">View order</a>
+      </div>
     {% empty %}
       <div class="empty">
         <p>
