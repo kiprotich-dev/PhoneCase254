@@ -203,6 +203,14 @@ def dashboard_jobs(request):
     return render(request, 'shop/dashboard_jobs.html', {'jobs': JobPosting.objects.all()})
 
 @staff_required
+def dashboard_job_applications(request):
+    applications = JobApplication.objects.select_related('job').all()
+    job_id = request.GET.get('job')
+    if job_id and job_id.isdigit():
+        applications = applications.filter(job_id=job_id)
+    return render(request, 'shop/dashboard_job_applications.html', {'applications': applications})
+
+@staff_required
 def dashboard_job_add(request):
     form = DashboardJobForm(request.POST or None)
     if form.is_valid():

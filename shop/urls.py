@@ -7,6 +7,7 @@ urlpatterns = [
     path('store-control-254/products/', views.dashboard_products, name='dashboard_products'),
     path('store-control-254/products/new/', views.dashboard_product_add, name='dashboard_product_add'),
     path('store-control-254/jobs/', views.dashboard_jobs, name='dashboard_jobs'),
+    path('store-control-254/jobs/applications/', views.dashboard_job_applications, name='dashboard_job_applications'),
     path('store-control-254/jobs/new/', views.dashboard_job_add, name='dashboard_job_add'),
     path('store-control-254/products/<int:product_id>/offer/', views.dashboard_offer_update, name='dashboard_offer_update'),
     path('store-control-254/orders/', views.dashboard_orders, name='dashboard_orders'),
