@@ -7,7 +7,9 @@
 .mobile-menu-toggle{display:none}
 @media(max-width:800px){
   header{position:relative}
-  header .mobile-menu-toggle{display:inline-flex;order:2;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:12px;letter-spacing:.04em;cursor:pointer}
+  header .mobile-menu-toggle{display:inline-flex;order:1;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:12px;letter-spacing:.04em;cursor:pointer}
+  header .brand{order:2;white-space:nowrap}
+  header .header-actions{order:3;margin-left:auto}
   header .mobile-menu-toggle:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   header nav#primary-navigation{display:none;position:absolute;z-index:10;top:calc(100% - 1px);left:0;right:0;max-width:none;width:100%;padding:9px 5% 15px;border:1px solid var(--line);border-top:0;background:var(--paper);box-shadow:0 12px 18px rgba(30,36,32,.12);flex-direction:column;gap:0;overflow:visible;white-space:normal}
   header nav#primary-navigation.is-open{display:flex}
@@ -15,7 +17,8 @@
   header nav#primary-navigation a:last-child{border-bottom:0}
 }
 @media(max-width:700px){
-  header .mobile-menu-toggle{order:2}
-  header .header-actions{order:3}
+  header .mobile-menu-toggle{order:1}
+  header .brand{order:2}
+  header .header-actions{order:3;margin-left:auto}
   header nav#primary-navigation{order:4;flex:initial;width:100%}
 }

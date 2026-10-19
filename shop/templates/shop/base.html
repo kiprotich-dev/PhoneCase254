@@ -28,6 +28,10 @@
         Designed to be kept
       </div>
       <header>
+        <button class="mobile-menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false">
+          <span class="menu-icon" aria-hidden="true">☰</span>
+          <span>Menu</span>
+        </button>
         <a class="brand" href="{% url 'home' %}">
           phone
           <span>
@@ -35,10 +39,6 @@
           </span>
           254
         </a>
-        <button class="mobile-menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false">
-          <span class="menu-icon" aria-hidden="true">☰</span>
-          <span>Menu</span>
-        </button>
         <nav id="primary-navigation" aria-label="Main navigation">
           <a href="{% url 'shop' %}">
             Shop
