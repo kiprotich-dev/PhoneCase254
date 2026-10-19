@@ -2,3 +2,20 @@
 @media(max-width:700px){.button,.wishlist-button,.quick-add,.form-card button,.tracking-actions a{width:100%;min-height:48px}.button{display:flex;justify-content:space-between;gap:14px;padding:14px 16px;white-space:normal}.wishlist-button{display:flex;align-items:center;justify-content:center;white-space:normal;padding:14px 16px}.quick-add{padding:13px 0}.tracking-actions{width:100%}.product-card form{width:100%}.detail-copy .button,.detail-copy .wishlist-button,.checkout .button,.checkout .wishlist-button{width:100%}.auth .button{width:100%}header nav{max-width:100%;overflow-x:auto;scrollbar-width:none;white-space:nowrap}header nav::-webkit-scrollbar{display:none}.header-actions{min-width:0}.header-actions .bag{white-space:nowrap}}
 @media(max-width:700px){header{height:auto;min-height:70px;flex-wrap:wrap;align-content:center;padding-top:11px;padding-bottom:11px;row-gap:8px}header .brand{order:1;flex:0 0 auto;white-space:nowrap}header .header-actions{order:2;margin-left:auto;flex:0 1 auto}header nav{order:3;flex:0 0 100%;width:100%;padding:7px 0 2px;border-top:1px solid var(--line);gap:20px}header nav a{display:inline-block;white-space:nowrap}.announcement{position:relative;z-index:3}}
 @media(min-width:701px){.button:hover,.wishlist-button:hover,.quick-add:hover{opacity:.86}}
+
+/* Keep the primary links available on compact devices where the inline nav is hidden. */
+.mobile-menu-toggle{display:none}
+@media(max-width:800px){
+  header{position:relative}
+  header .mobile-menu-toggle{display:inline-flex;order:2;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:12px;letter-spacing:.04em;cursor:pointer}
+  header .mobile-menu-toggle:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  header nav#primary-navigation{display:none;position:absolute;z-index:10;top:calc(100% - 1px);left:0;right:0;max-width:none;width:100%;padding:9px 5% 15px;border:1px solid var(--line);border-top:0;background:var(--paper);box-shadow:0 12px 18px rgba(30,36,32,.12);flex-direction:column;gap:0;overflow:visible;white-space:normal}
+  header nav#primary-navigation.is-open{display:flex}
+  header nav#primary-navigation a{display:block;padding:12px 4px;border-bottom:1px solid var(--line);white-space:normal}
+  header nav#primary-navigation a:last-child{border-bottom:0}
+}
+@media(max-width:700px){
+  header .mobile-menu-toggle{order:2}
+  header .header-actions{order:3}
+  header nav#primary-navigation{order:4;flex:initial;width:100%}
+}

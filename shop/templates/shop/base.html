@@ -35,7 +35,11 @@
           </span>
           254
         </a>
-        <nav>
+        <button class="mobile-menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false">
+          <span class="menu-icon" aria-hidden="true">☰</span>
+          <span>Menu</span>
+        </button>
+        <nav id="primary-navigation" aria-label="Main navigation">
           <a href="{% url 'shop' %}">
             Shop
           </a>

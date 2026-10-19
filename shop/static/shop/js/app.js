@@ -1,5 +1,30 @@
 document.querySelectorAll('.messages').forEach((message) => { setTimeout(() => message.remove(), 4200); });
 
+const mobileMenuButton = document.querySelector('.mobile-menu-toggle');
+const primaryNavigation = document.querySelector('#primary-navigation');
+if (mobileMenuButton && primaryNavigation) {
+  const setMenuOpen = (open) => {
+    mobileMenuButton.setAttribute('aria-expanded', String(open));
+    primaryNavigation.classList.toggle('is-open', open);
+  };
+
+  mobileMenuButton.addEventListener('click', () => {
+    setMenuOpen(mobileMenuButton.getAttribute('aria-expanded') !== 'true');
+  });
+  primaryNavigation.addEventListener('click', (event) => {
+    if (event.target.closest('a')) setMenuOpen(false);
+  });
+  document.addEventListener('click', (event) => {
+    if (!primaryNavigation.contains(event.target) && !mobileMenuButton.contains(event.target)) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      setMenuOpen(false);
+      mobileMenuButton.focus();
+    }
+  });
+}
+
 const showCartMessage = (text, type = 'success') => {
   const messages = document.createElement('div');
   messages.className = `messages ${type}`;
