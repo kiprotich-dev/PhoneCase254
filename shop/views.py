@@ -216,6 +216,13 @@ def dashboard_application_resume(request, application_id):
     application = get_object_or_404(JobApplication, pk=application_id)
     if not application.resume:
         return HttpResponse('No CV attached.', status=404)
+    if os.environ.get('CLOUDINARY_URL'):
+        import cloudinary.utils
+        public_id = application.resume.name
+        if not public_id.startswith('media/'):
+            public_id = f'media/{public_id}'
+        signed_url, _ = cloudinary.utils.cloudinary_url(public_id, secure=True, sign_url=True, resource_type='image', type='upload')
+        return redirect(signed_url)
     response = FileResponse(application.resume.open('rb'), content_type=mimetypes.guess_type(application.resume.name)[0] or 'application/octet-stream')
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(application.resume.name)}"'
     return response
