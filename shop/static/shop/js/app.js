@@ -3,8 +3,11 @@ document.querySelectorAll('.messages').forEach((message) => { setTimeout(() => m
 const mobileMenuButton = document.querySelector('.mobile-menu-toggle');
 const primaryNavigation = document.querySelector('#primary-navigation');
 if (mobileMenuButton && primaryNavigation) {
+  const menuIcon = mobileMenuButton.querySelector('.menu-icon');
   const setMenuOpen = (open) => {
     mobileMenuButton.setAttribute('aria-expanded', String(open));
+    mobileMenuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    if (menuIcon) menuIcon.textContent = open ? '×' : '☰';
     primaryNavigation.classList.toggle('is-open', open);
   };
 
