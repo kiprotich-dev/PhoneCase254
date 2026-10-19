@@ -16,6 +16,12 @@
       <p>
         Ask about an order, delivery, sizing, or anything else.
       </p>
+      <div class="support-card">
+        <strong>Direct support</strong>
+        <a href="tel:{{ support_phone }}">{{ support_phone }}</a>
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+        <small>We’re happy to help with orders, payments, delivery, and product questions.</small>
+      </div>
       <form method="post" class="form-card">
         {% csrf_token %}
         <label>

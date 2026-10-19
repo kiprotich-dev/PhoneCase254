@@ -13,6 +13,7 @@
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
+      <link rel="stylesheet" href="{% static 'shop/css/support.css' %}">
     </head>
     <body>
       <div class="announcement">
@@ -122,8 +123,10 @@
                     <a href="{% url 'contact' %}">
                       Contact us
                     </a>
+                    <a href="tel:{{ support_phone }}">{{ support_phone }}</a>
+                    <a href="mailto:{{ support_email }}">{{ support_email }}</a>
                   </div>
-                  <div>
+                  <div class="footer-support">
                     <b>
                       Follow along
                     </b>

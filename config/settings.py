@@ -130,6 +130,8 @@ ORDER_NOTIFICATION_EMAIL = os.environ.get(
 OWNER_PHONE_NUMBER = os.environ.get(
     'OWNER_PHONE_NUMBER', '0727729400'
 )
+SUPPORT_PHONE = os.environ.get('SUPPORT_PHONE', '0727729400')
+SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', 'phonecase254.shop@gmail.com')
 
 # ==========================================
 
@@ -148,3 +150,10 @@ MPESA_TRANSACTION_DESCRIPTION = os.environ.get('MPESA_TRANSACTION_DESCRIPTION', 
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [origin for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin]
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = 'DENY'

@@ -3,6 +3,13 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('store-control-254/', views.dashboard, name='dashboard'),
+    path('store-control-254/products/', views.dashboard_products, name='dashboard_products'),
+    path('store-control-254/products/new/', views.dashboard_product_add, name='dashboard_product_add'),
+    path('store-control-254/orders/', views.dashboard_orders, name='dashboard_orders'),
+    path('store-control-254/customers/', views.dashboard_customers, name='dashboard_customers'),
+    path('store-control-254/inventory/', views.dashboard_inventory, name='dashboard_inventory'),
+    path('store-control-254/messages/', views.dashboard_messages, name='dashboard_messages'),
     path('', views.home, name='home'), path('shop/', views.shop, name='shop'), path('shop/<slug:slug>/', views.product_detail, name='product_detail'), path('shop/<slug:slug>/review/', views.review_product, name='review_product'),
     path('cart/', views.cart, name='cart'), path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'), path('cart/remove/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'), path('cart/update/', views.update_cart, name='update_cart'),
     path('wishlist/', views.wishlist, name='wishlist'), path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
@@ -12,7 +19,7 @@ urlpatterns = [
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
-    path('checkout/', views.checkout, name='checkout'), path('order-success/<int:order_id>/', views.order_success, name='order_success'), path('orders/', views.orders, name='orders'), path('orders/<int:order_id>/', views.order_detail, name='order_detail'), path('orders/<int:order_id>/status/', views.order_status, name='order_status'), path('orders/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'), path('orders/<int:order_id>/reorder/', views.reorder, name='reorder'),
+    path('checkout/', views.checkout, name='checkout'), path('order-success/<int:order_id>/', views.order_success, name='order_success'), path('orders/', views.orders, name='orders'), path('orders/<int:order_id>/', views.order_detail, name='order_detail'), path('orders/<int:order_id>/invoice/', views.invoice_download, name='invoice_download'), path('orders/<int:order_id>/status/', views.order_status, name='order_status'), path('orders/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'), path('orders/<int:order_id>/reorder/', views.reorder, name='reorder'),
     path('contact/', views.contact, name='contact'),
     path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
 ]

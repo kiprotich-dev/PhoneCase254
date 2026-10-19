@@ -41,6 +41,10 @@ services:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
+      - key: SUPPORT_PHONE
+        value: '0727729400'
+      - key: SUPPORT_EMAIL
+        value: phonecase254.shop@gmail.com
       - key: CLOUDINARY_URL
         sync: false
       - key: MPESA_ENVIRONMENT

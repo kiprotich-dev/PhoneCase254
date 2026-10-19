@@ -6,11 +6,11 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -20,9 +20,9 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils import timezone
 from django.contrib.auth.tokens import default_token_generator
-from .forms import CheckoutForm, ContactForm, ProductReviewForm, SignUpForm
-from .models import Category, CustomerProfile, Order, OrderItem, Product, ProductReview, Wishlist
-from .services.mpesa import initiate_stk_push
+from .forms import CheckoutForm, ContactForm, DashboardProductForm, ProductReviewForm, SignUpForm
+from .models import Category, ContactMessage, CustomerProfile, Order, OrderItem, Product, ProductReview, Wishlist
+from .services.mpesa import initiate_stk_push, query_stk_push
 from .services.invoice import build_invoice_pdf
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,82 @@ PREPAID_DELIVERY_DISCOUNT_RATE = Decimal('0.06')
 WELCOME_POINTS = 50
 REVIEW_POINTS = 25
 FREE_DELIVERY_DISCOUNT_THRESHOLD = Decimal('2000')
+
+staff_required = user_passes_test(lambda user: user.is_active and user.is_staff, login_url='login')
+
+@staff_required
+def dashboard(request):
+    today = timezone.localdate()
+    start_of_month = today.replace(day=1)
+    orders = Order.objects.select_related('user').prefetch_related('items__product')
+    paid_orders = orders.filter(payment_status='paid')
+    recent_orders = orders.order_by('-created_at')[:6]
+    low_stock = Product.objects.filter(stock__lte=5).order_by('stock', 'name')
+    out_of_stock_count = Product.objects.filter(stock=0).count()
+    top_products = Product.objects.annotate(
+        units_sold=Sum('orderitem__quantity', filter=Q(orderitem__order__payment_status='paid'))
+    ).order_by('-units_sold', 'name')[:5]
+    recent_customers = User.objects.filter(is_staff=False).order_by('-date_joined')[:5]
+    month_orders = orders.filter(created_at__date__gte=start_of_month)
+    month_paid_orders = paid_orders.filter(created_at__date__gte=start_of_month)
+    month_revenue = month_paid_orders.aggregate(total=Sum('total'))['total'] or Decimal('0')
+    total_revenue = paid_orders.aggregate(total=Sum('total'))['total'] or Decimal('0')
+    status_counts = {key: orders.filter(status=key).count() for key, label in Order.STATUS_CHOICES}
+    stock_total = Product.objects.aggregate(total=Sum('stock'))['total'] or 0
+    activity = []
+    for order in orders.order_by('-created_at')[:3]:
+        activity.append({'kind': 'order', 'label': 'New order', 'detail': order.public_reference, 'time': order.created_at})
+    for customer in recent_customers[:2]:
+        activity.append({'kind': 'customer', 'label': 'New customer', 'detail': customer.get_full_name() or customer.username, 'time': customer.date_joined})
+    activity.sort(key=lambda item: item['time'], reverse=True)
+    return render(request, 'shop/dashboard.html', {
+        'today': today,
+        'total_orders': orders.count(),
+        'month_orders': month_orders.count(),
+        'total_revenue': total_revenue,
+        'month_revenue': month_revenue,
+        'total_customers': User.objects.filter(is_staff=False).count(),
+        'product_count': Product.objects.count(),
+        'low_stock_count': low_stock.count(),
+        'out_of_stock_count': out_of_stock_count,
+        'healthy_stock_count': max(Product.objects.count() - low_stock.count(), 0),
+        'low_stock': low_stock[:6],
+        'recent_orders': recent_orders,
+        'top_products': top_products,
+        'recent_customers': recent_customers,
+        'status_counts': status_counts,
+        'stock_total': stock_total,
+        'activity': activity[:6],
+    })
+
+@staff_required
+def dashboard_products(request):
+    return render(request, 'shop/dashboard_list.html', {'section': 'Products', 'description': 'Manage your case catalogue and product photos.', 'products': Product.objects.select_related('category').order_by('name')})
+
+@staff_required
+def dashboard_product_add(request):
+    form = DashboardProductForm(request.POST or None, request.FILES or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Product added successfully.')
+        return redirect('dashboard_products')
+    return render(request, 'shop/dashboard_product_form.html', {'form': form})
+
+@staff_required
+def dashboard_orders(request):
+    return render(request, 'shop/dashboard_list.html', {'section': 'Orders', 'description': 'Review payments, fulfilment status, and customer details.', 'orders': Order.objects.select_related('user').prefetch_related('items__product').order_by('-created_at')})
+
+@staff_required
+def dashboard_customers(request):
+    return render(request, 'shop/dashboard_list.html', {'section': 'Customers', 'description': 'View customer accounts, loyalty points, and order history.', 'customers': User.objects.filter(is_staff=False).order_by('-date_joined')})
+
+@staff_required
+def dashboard_inventory(request):
+    return render(request, 'shop/dashboard_list.html', {'section': 'Inventory', 'description': 'Monitor stock levels and identify products that need attention.', 'inventory': Product.objects.select_related('category').order_by('stock', 'name')})
+
+@staff_required
+def dashboard_messages(request):
+    return render(request, 'shop/dashboard_list.html', {'section': 'Messages', 'description': 'Read customer questions and order-related communication.', 'contact_messages': ContactMessage.objects.select_related('user', 'order').order_by('-created_at')})
 
 def logout_user(request):
     logout(request)
@@ -334,8 +410,66 @@ def order_detail(request, order_id):
     return render(request, 'shop/order_detail.html', {'order': order, 'can_cancel': can_cancel})
 
 @login_required
+def invoice_download(request, order_id):
+    order_query = Order.objects.select_related('user').prefetch_related('items__product__category')
+    if request.user.is_staff:
+        order = get_object_or_404(order_query, pk=order_id)
+    else:
+        order = get_object_or_404(order_query, pk=order_id, user=request.user)
+    items = [{'product': item.product, 'quantity': item.quantity, 'line_total': item.line_total} for item in order.items.all()]
+    pdf = build_invoice_pdf(order, items, order.user.email)
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="phoneCase254-{order.public_reference}.pdf"'
+    return response
+
+def _apply_mpesa_query_result(order_id, result_code, result_desc=''):
+    newly_paid = False
+    newly_failed = False
+    with transaction.atomic():
+        order = Order.objects.select_for_update().get(pk=order_id)
+        newly_paid = result_code == '0' and order.payment_status != 'paid'
+        newly_failed = result_code != '0' and order.payment_status == 'pending'
+        order.mpesa_result_code = result_code
+        if result_code == '0':
+            order.status = 'confirmed'
+            order.payment_status = 'paid'
+            profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
+            profile.record_payment(order)
+        elif newly_failed and order.status == 'pending':
+            for item in order.items.all():
+                product = Product.objects.select_for_update().get(pk=item.product_id)
+                product.stock += item.quantity
+                product.save(update_fields=['stock'])
+            if order.points_redeemed:
+                profile, _ = CustomerProfile.objects.select_for_update().get_or_create(user=order.user)
+                profile.loyalty_points += order.points_redeemed
+                profile.save(update_fields=['loyalty_points'])
+            order.status = 'cancelled'
+            order.payment_status = 'failed'
+        order.save(update_fields=['mpesa_result_code', 'status', 'payment_status'])
+    return order, newly_paid, newly_failed
+
+@login_required
 def order_status(request, order_id):
     order = get_object_or_404(request.user.orders, pk=order_id)
+    if order.payment_method == 'prepaid' and order.payment_status == 'pending' and order.mpesa_checkout_request_id:
+        try:
+            query = query_stk_push(order)
+            result_code = query.get('ResultCode')
+            if result_code is not None:
+                order, newly_paid, newly_failed = _apply_mpesa_query_result(order.id, str(result_code), query.get('ResultDesc', ''))
+                if newly_paid:
+                    try:
+                        _send_order_invoice(order)
+                    except Exception:
+                        logger.exception('Could not send queried-payment invoice for order %s', order.id)
+                elif newly_failed:
+                    try:
+                        _send_payment_failure_notice(order, query.get('ResultDesc') or 'The M-Pesa payment was declined or cancelled.')
+                    except Exception:
+                        logger.exception('Could not send queried-payment failure notice for order %s', order.id)
+        except Exception:
+            logger.debug('M-Pesa status query is still pending for order %s', order.id, exc_info=True)
     response = JsonResponse({'status': order.status, 'payment_status': order.payment_status, 'receipt': order.mpesa_receipt})
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response

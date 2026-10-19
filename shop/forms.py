@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import ContactMessage, Order, ProductReview
+from .models import ContactMessage, Order, Product, ProductReview
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True, help_text='We will send a confirmation link here.')
@@ -35,3 +35,8 @@ class ProductReviewForm(forms.ModelForm):
         model = ProductReview
         fields = ('rating', 'title', 'body', 'image')
         widgets = {'body': forms.Textarea(attrs={'rows': 5, 'placeholder': 'What did you like about this case?'})}
+
+class DashboardProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ('name', 'category', 'description', 'price', 'stock', 'image', 'image_url', 'accent', 'is_featured')

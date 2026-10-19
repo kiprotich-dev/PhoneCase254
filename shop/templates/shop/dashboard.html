@@ -1,0 +1,78 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Store control · phoneCase254</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'shop/css/dashboard.css' %}"><link rel="stylesheet" href="{% static 'shop/css/dashboard-extra.css' %}">
+</head>
+<body class="dashboard-body">
+  <aside class="dashboard-sidebar">
+    <a class="dashboard-brand" href="{% url 'home' %}"><span>phone</span>Case254<small>STORE CONTROL</small></a>
+    <nav class="dashboard-nav" aria-label="Dashboard navigation">
+      <a class="active" href="{% url 'dashboard' %}"><span>⌂</span> Dashboard</a>
+      <a href="{% url 'dashboard_products' %}"><span>▣</span> Products</a>
+      <a href="{% url 'dashboard_orders' %}"><span>↗</span> Orders</a>
+      <a href="{% url 'dashboard_customers' %}"><span>♙</span> Customers</a>
+      <a href="{% url 'dashboard_inventory' %}"><span>▤</span> Inventory</a>
+      <a href="{% url 'dashboard_customers' %}"><span>✦</span> Loyalty</a>
+      <a href="{% url 'dashboard_messages' %}"><span>□</span> Messages</a>
+    </nav>
+    <div class="dashboard-sidebar-bottom">
+      <a href="{% url 'admin:index' %}"><span>⚙</span> Django admin</a>
+      <a href="{% url 'home' %}"><span>↗</span> View store</a>
+      <a href="{% url 'logout' %}"><span>⇥</span> Log out</a>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="dashboard-header">
+      <div class="mobile-brand"><span>phone</span>Case254</div>
+      <div class="dashboard-search">⌕ <span>Search products, orders, customers...</span></div>
+      <div class="dashboard-account"><span class="online-dot"></span><span class="account-avatar">{{ request.user.username|first|upper }}</span><span><b>{{ request.user.get_full_name|default:request.user.username }}</b><small>Administrator</small></span></div>
+    </header>
+
+    <section class="dashboard-content">
+      <div class="dashboard-heading">
+        <div><p class="dashboard-eyebrow">Store overview</p><h1>Dashboard</h1><p>Welcome back. Here’s what’s happening with your store.</p></div>
+        <time datetime="{{ today|date:'Y-m-d' }}">{{ today|date:'D, d M Y' }}</time>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric-card blue"><div class="metric-icon">▣</div><p>Total orders</p><strong>{{ total_orders }}</strong><small>{{ month_orders }} this month</small></article>
+        <article class="metric-card green"><div class="metric-icon">KSh</div><p>Total revenue</p><strong>KSh {{ total_revenue|floatformat:0 }}</strong><small>KSh {{ month_revenue|floatformat:0 }} this month</small></article>
+        <article class="metric-card purple"><div class="metric-icon">♙</div><p>Total customers</p><strong>{{ total_customers }}</strong><small>Registered accounts</small></article>
+        <article class="metric-card red"><div class="metric-icon">!</div><p>Low stock items</p><strong>{{ low_stock_count }}</strong><small>{% if low_stock_count %}Action required{% else %}Inventory looks healthy{% endif %}</small></article>
+      </div>
+
+      <div class="dashboard-grid dashboard-grid-main">
+        <section class="panel sales-panel">
+          <div class="panel-heading"><div><h2>Order pipeline</h2><p>Live status of every order</p></div><a href="{% url 'dashboard_orders' %}">View all →</a></div>
+          <div class="pipeline-chart">
+            <div class="pipeline-row"><span>Pending payment</span><b>{{ status_counts.pending }}</b><i><em style="width: {{ status_counts.pending }}0%"></em></i></div>
+            <div class="pipeline-row"><span>Confirmed</span><b>{{ status_counts.confirmed }}</b><i><em class="green-bar" style="width: {{ status_counts.confirmed }}0%"></em></i></div>
+            <div class="pipeline-row"><span>Packed</span><b>{{ status_counts.packed }}</b><i><em class="purple-bar" style="width: {{ status_counts.packed }}0%"></em></i></div>
+            <div class="pipeline-row"><span>Shipped</span><b>{{ status_counts.shipped }}</b><i><em class="orange-bar" style="width: {{ status_counts.shipped }}0%"></em></i></div>
+            <div class="pipeline-row"><span>Delivered</span><b>{{ status_counts.delivered }}</b><i><em class="green-bar" style="width: {{ status_counts.delivered }}0%"></em></i></div>
+          </div>
+        </section>
+        <section class="panel quick-panel"><div class="panel-heading"><div><h2>Quick actions</h2><p>Common store tasks</p></div></div><div class="quick-actions"><a class="action-blue" href="{% url 'dashboard_product_add' %}">＋ Add product</a><a class="action-green" href="{% url 'dashboard_orders' %}">↗ Manage orders</a><a class="action-purple" href="{% url 'dashboard_inventory' %}">▣ Update inventory</a><a class="action-orange" href="{% url 'dashboard_messages' %}">□ Read messages</a></div></section>
+      </div>
+
+      <div class="dashboard-grid dashboard-grid-lower">
+        <section class="panel"><div class="panel-heading"><div><h2>Recent orders</h2><p>The latest customer activity</p></div><a href="{% url 'dashboard_orders' %}">View all →</a></div><div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>{% for order in recent_orders %}<tr><td><b>{{ order.public_reference }}</b><small>{{ order.created_at|timesince }} ago</small></td><td>{{ order.full_name }}</td><td>KSh {{ order.total|floatformat:0 }}</td><td><span class="status status-{{ order.status }}">{{ order.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="4" class="empty-cell">No orders yet.</td></tr>{% endfor %}</tbody></table></div></section>
+        <section class="panel"><div class="panel-heading"><div><h2>Top products</h2><p>Best sellers by paid orders</p></div><a href="{% url 'dashboard_products' %}">Manage →</a></div><div class="product-list">{% for product in top_products %}<div class="product-list-row"><div class="dashboard-product-image">{% if product.image %}<img src="{{ product.image.url }}" alt="">{% else %}<span>▧</span>{% endif %}</div><div><b>{{ product.name }}</b><small>{{ product.units_sold|default:0 }} units sold</small></div><strong>KSh {{ product.price|floatformat:0 }}</strong></div>{% empty %}<p class="empty-cell">Sales will appear here after orders are paid.</p>{% endfor %}</div></section>
+      </div>
+
+      <div class="dashboard-grid dashboard-grid-bottom">
+        <section class="panel"><div class="panel-heading"><div><h2>Inventory status</h2><p>{{ product_count }} products · {{ stock_total }} units in stock</p></div><a href="{% url 'dashboard_inventory' %}">Update →</a></div><div class="inventory-summary"><div class="inventory-ring"><strong>{{ product_count }}</strong><span>products</span></div><div class="inventory-legend"><span><i class="dot green-dot"></i> Healthy <b>{{ healthy_stock_count }}</b></span><span><i class="dot orange-dot"></i> Low stock <b>{{ low_stock_count }}</b></span><span><i class="dot red-dot"></i> Out of stock <b>{{ out_of_stock_count }}</b></span></div></div></section>
+        <section class="panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>Latest store events</p></div></div><div class="activity-list">{% for item in activity %}<div class="activity-row"><span class="activity-icon {{ item.kind }}">{% if item.kind == 'order' %}↗{% else %}♙{% endif %}</span><div><b>{{ item.label }}</b><span>{{ item.detail }}</span></div><small>{{ item.time|timesince }} ago</small></div>{% empty %}<p class="empty-cell">Activity will appear here.</p>{% endfor %}</div></section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

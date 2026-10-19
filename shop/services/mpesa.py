@@ -49,3 +49,20 @@ def initiate_stk_push(order):
     data = response.json()
     if data.get('ResponseCode') not in (None, '0'): raise RuntimeError(data.get('ResponseDescription', 'M-Pesa request was rejected.'))
     return data
+
+def query_stk_push(order):
+    if not settings.MPESA_CONSUMER_KEY or not settings.MPESA_CONSUMER_SECRET or not settings.MPESA_PASSKEY:
+        raise RuntimeError('M-Pesa credentials are not configured in the local environment.')
+    if not order.mpesa_checkout_request_id:
+        return {}
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    password = base64.b64encode(f'{settings.MPESA_SHORT_CODE}{settings.MPESA_PASSKEY}{timestamp}'.encode()).decode()
+    payload = {
+        'BusinessShortCode': settings.MPESA_SHORT_CODE,
+        'Password': password,
+        'Timestamp': timestamp,
+        'CheckoutRequestID': order.mpesa_checkout_request_id,
+    }
+    response = requests.post(f'{_base_url()}/mpesa/stkpushquery/v1/query', json=payload, headers={'Authorization': f'Bearer {_access_token()}'}, timeout=20)
+    response.raise_for_status()
+    return response.json()
