@@ -24,8 +24,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils import timezone
 from django.contrib.auth.tokens import default_token_generator
-from .forms import CheckoutForm, ContactForm, DashboardOfferForm, DashboardProductForm, JobApplicationForm, ProductReviewForm, SignUpForm
-from .models import Category, ContactMessage, CustomerProfile, JobPosting, Order, OrderItem, Product, ProductReview, Wishlist
+from .forms import CheckoutForm, ContactForm, DashboardJobForm, DashboardOfferForm, DashboardProductForm, JobApplicationForm, ProductReviewForm, SignUpForm
+from .models import Category, ContactMessage, CustomerProfile, JobApplication, JobPosting, Order, OrderItem, Product, ProductReview, Wishlist
 from .services.mpesa import initiate_stk_push, query_stk_push
 from .services.invoice import build_invoice_pdf
 
@@ -95,6 +95,8 @@ def dashboard(request):
         'inventory_value': inventory_value,
         'activity': activity[:6],
         'sales_series': sales_series,
+        'job_count': JobPosting.objects.filter(is_published=True).count(),
+        'application_count': JobApplication.objects.count(),
         'movement_fast': movement_fast,
         'movement_slow': movement_slow,
         'movement_death': movement_death,
@@ -195,6 +197,19 @@ def dashboard_product_add(request):
         messages.success(request, 'Product added successfully.')
         return redirect('dashboard_products')
     return render(request, 'shop/dashboard_product_form.html', {'form': form})
+
+@staff_required
+def dashboard_jobs(request):
+    return render(request, 'shop/dashboard_jobs.html', {'jobs': JobPosting.objects.all()})
+
+@staff_required
+def dashboard_job_add(request):
+    form = DashboardJobForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Job posting saved successfully.')
+        return redirect('dashboard_jobs')
+    return render(request, 'shop/dashboard_job_form.html', {'form': form})
 
 @staff_required
 @require_POST

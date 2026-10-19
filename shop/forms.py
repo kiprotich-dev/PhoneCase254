@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import ContactMessage, JobApplication, Order, Product, ProductReview
+from .models import ContactMessage, JobApplication, JobPosting, Order, Product, ProductReview
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True, help_text='We will send a confirmation link here.')
@@ -56,3 +56,9 @@ class JobApplicationForm(forms.ModelForm):
         model = JobApplication
         fields = ('full_name', 'email', 'phone', 'cover_letter', 'resume')
         widgets = {'cover_letter': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Tell us why you would be a great fit.'})}
+
+class DashboardJobForm(forms.ModelForm):
+    class Meta:
+        model = JobPosting
+        fields = ('title', 'department', 'employment_type', 'location', 'summary', 'description', 'requirements', 'closing_date', 'is_published')
+        widgets = {'description': forms.Textarea(attrs={'rows': 6}), 'requirements': forms.Textarea(attrs={'rows': 6}), 'closing_date': forms.DateInput(attrs={'type': 'date'})}
