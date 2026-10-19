@@ -1,6 +1,7 @@
 from decimal import Decimal
 import io
 import json
+import mimetypes
 import os
 import zipfile
 from xml.sax.saxutils import escape
@@ -15,7 +16,7 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
@@ -209,6 +210,15 @@ def dashboard_job_applications(request):
     if job_id and job_id.isdigit():
         applications = applications.filter(job_id=job_id)
     return render(request, 'shop/dashboard_job_applications.html', {'applications': applications})
+
+@staff_required
+def dashboard_application_resume(request, application_id):
+    application = get_object_or_404(JobApplication, pk=application_id)
+    if not application.resume:
+        return HttpResponse('No CV attached.', status=404)
+    response = FileResponse(application.resume.open('rb'), content_type=mimetypes.guess_type(application.resume.name)[0] or 'application/octet-stream')
+    response['Content-Disposition'] = f'inline; filename="{os.path.basename(application.resume.name)}"'
+    return response
 
 @staff_required
 def dashboard_job_add(request):
