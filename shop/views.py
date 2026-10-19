@@ -221,8 +221,9 @@ def dashboard_application_resume(request, application_id):
         public_id = application.resume.name
         if not public_id.startswith('media/'):
             public_id = f'media/{public_id}'
-        signed_url, _ = cloudinary.utils.cloudinary_url(public_id, secure=True, sign_url=True, resource_type='image', type='upload')
-        return redirect(signed_url)
+        file_format = os.path.splitext(application.resume.name)[1].lstrip('.').lower() or 'pdf'
+        private_url = cloudinary.utils.private_download_url(public_id, file_format, resource_type='image', type='upload', secure=True, attachment=False)
+        return redirect(private_url)
     response = FileResponse(application.resume.open('rb'), content_type=mimetypes.guess_type(application.resume.name)[0] or 'application/octet-stream')
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(application.resume.name)}"'
     return response
