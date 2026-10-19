@@ -20,7 +20,7 @@
       <a href="{% url 'dashboard_products' %}"><span>▣</span> Products</a>
       <a href="{% url 'dashboard_orders' %}"><span>↗</span> Orders</a>
       <a href="{% url 'dashboard_customers' %}"><span>♙</span> Customers</a>
-      <a href="{% url 'dashboard_jobs' %}"><span>✦</span> Jobs</a>
+      <a href="{% url 'dashboard_jobs' %}"><span>✦</span> Jobs / Careers</a>
       <a href="{% url 'dashboard_inventory' %}"><span>▤</span> Inventory</a>
       <a href="{% url 'dashboard_customers' %}"><span>✦</span> Loyalty</a>
       <a href="{% url 'dashboard_messages' %}"><span>□</span> Messages</a>
@@ -54,7 +54,7 @@
         <article class="metric-card red"><div class="metric-icon">!</div><p>Low stock items</p><strong>{{ low_stock_count }}</strong><small>{% if low_stock_count %}Action required{% else %}Inventory looks healthy{% endif %}</small></article>
         <article class="metric-card orange"><div class="metric-icon">KSh</div><p>Stock value</p><strong>KSh {{ inventory_value|floatformat:0 }}</strong><small>{{ stock_total }} units at retail price</small></article>
       </div>
-      <section class="panel dashboard-jobs-panel"><div class="panel-heading"><div><h2>Jobs & applications</h2><p>{{ job_count }} published role{{ job_count|pluralize }} · {{ application_count }} application{{ application_count|pluralize }}</p></div><a href="{% url 'dashboard_jobs' %}">Manage jobs →</a></div><div class="dashboard-jobs-actions"><span>Post roles from Store Control and review applications in one place.</span><a class="button-dashboard" href="{% url 'dashboard_job_add' %}">＋ Post a job</a><a class="button-dashboard" href="{% url 'admin:shop_jobposting_changelist' %}">Django admin</a></div></section>
+      <section class="panel dashboard-jobs-panel"><div class="panel-heading"><div><h2>Jobs & applications</h2><p>{{ job_count }} published role{{ job_count|pluralize }} · {{ application_count }} application{{ application_count|pluralize }}</p></div><a href="{% url 'dashboard_jobs' %}">List jobs →</a></div><div class="dashboard-jobs-actions"><span>Post roles from Store Control and review applications in one place.</span><a class="button-dashboard" href="{% url 'dashboard_job_add' %}">＋ Post a job</a><a class="button-dashboard" href="{% url 'admin:shop_jobposting_changelist' %}">Django admin</a></div></section>
 
       <section class="panel sales-overview-panel">
         <div class="panel-heading"><div><h2>Sales overview</h2><p>Paid order revenue from your live store</p></div><div class="chart-switcher"><button class="chart-range active" data-range="7">7D</button><button class="chart-range" data-range="30">30D</button><button class="chart-range" data-range="90">3M</button></div></div>
