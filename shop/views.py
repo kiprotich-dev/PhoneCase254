@@ -33,6 +33,8 @@ from .services.invoice import build_invoice_pdf
 
 logger = logging.getLogger(__name__)
 DELIVERY_RATE = Decimal('0.10')
+# STK query responses can be temporary; only these known codes are terminal failures.
+MPESA_QUERY_TERMINAL_FAILURE_CODES = {'1', '1032', '1037', '2001', '2006'}
 PREPAID_ITEM_DISCOUNT_RATE = Decimal('0.05')
 PREPAID_DELIVERY_DISCOUNT_RATE = Decimal('0.06')
 WELCOME_POINTS = 50
@@ -275,6 +277,7 @@ def dashboard_order_status_update(request, order_id):
         if new_status == 'delivered' and was_on_delivery and order.payment_status == 'paid':
             profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
             profile.record_payment(order)
+            order.status_updates.filter(status='cancelled').delete()
             messages.success(request, f'{order.public_reference} delivered and payment recorded as received.')
         else:
             messages.success(request, f'{order.public_reference} updated to {order.get_status_display()}.')
@@ -665,6 +668,7 @@ def _apply_mpesa_query_result(order_id, result_code, result_desc=''):
             order.payment_status = 'paid'
             profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
             profile.record_payment(order)
+            order.status_updates.filter(status='cancelled').delete()
         elif newly_failed and order.status == 'queue':
             for item in order.items.all():
                 product = Product.objects.select_for_update().get(pk=item.product_id)
@@ -682,22 +686,22 @@ def _apply_mpesa_query_result(order_id, result_code, result_desc=''):
 @login_required
 def order_status(request, order_id):
     order = get_object_or_404(request.user.orders, pk=order_id)
-    if order.payment_method == 'prepaid' and order.payment_status == 'pending' and order.mpesa_checkout_request_id:
+    if order.payment_method == 'prepaid' and order.payment_status in ('pending', 'failed') and order.mpesa_checkout_request_id:
         try:
             query = query_stk_push(order)
             result_code = query.get('ResultCode')
-            if result_code is not None:
-                order, newly_paid, newly_failed = _apply_mpesa_query_result(order.id, str(result_code), query.get('ResultDesc', ''))
+            result_desc = query.get('ResultDesc', '')
+            logger.info('M-Pesa STK query for %s returned code=%s description=%s', order.public_reference, result_code, result_desc)
+            if str(result_code) == '0':
+                order, newly_paid, newly_failed = _apply_mpesa_query_result(order.id, '0', result_desc)
                 if newly_paid:
                     try:
                         _send_order_invoice(order)
                     except Exception:
                         logger.exception('Could not send queried-payment invoice for order %s', order.id)
-                elif newly_failed:
-                    try:
-                        _send_payment_failure_notice(order, query.get('ResultDesc') or 'The M-Pesa payment was declined or cancelled.')
-                    except Exception:
-                        logger.exception('Could not send queried-payment failure notice for order %s', order.id)
+            elif result_code is not None:
+                # Safaricom's callback is authoritative; do not cancel an order from a poll response.
+                logger.info('Leaving order %s pending until callback confirms query code=%s', order.public_reference, result_code)
         except Exception:
             logger.debug('M-Pesa status query is still pending for order %s', order.id, exc_info=True)
     response = JsonResponse({'status': order.status, 'payment_status': order.payment_status, 'receipt': order.mpesa_receipt})
@@ -809,6 +813,7 @@ def mpesa_callback(request):
                     order.payment_status = 'paid'
                     profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
                     profile.record_payment(order)
+                    order.status_updates.filter(status='cancelled').delete()
                 else:
                     if newly_failed and order.status == 'queue':
                         for item in order.items.all():
@@ -868,5 +873,14 @@ def nova_ai(request):
     except (requests.RequestException, KeyError, ValueError, TypeError) as error:
         logger.warning('Nova AI request failed: %s', error)
         return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+
+
+
+
+
+
+
+
+
 
 
