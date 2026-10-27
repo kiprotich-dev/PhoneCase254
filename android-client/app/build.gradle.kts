@@ -16,6 +16,15 @@ android {
         buildConfigField("String", "STORE_URL", "\"https://phonecase254.onrender.com/\"")
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     buildFeatures { buildConfig = true }
 }
 
@@ -25,3 +34,5 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.webkit:webkit:1.12.1")
 }
+
+

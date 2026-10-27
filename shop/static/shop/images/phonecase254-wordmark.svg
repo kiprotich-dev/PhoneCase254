@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 80" role="img" aria-labelledby="title">
+  <title id="title">phoneCase254</title>
+  <defs><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2d8cff"/><stop offset="1" stop-color="#67d9ff"/></linearGradient></defs>
+  <g transform="translate(4 6)">
+    <rect width="58" height="68" rx="15" fill="#101b18"/>
+    <rect x="15" y="12" width="28" height="44" rx="7" fill="none" stroke="url(#blue)" stroke-width="4"/>
+    <circle cx="36" cy="22" r="6" fill="#ff5d6c"/><path d="M36 18l1.3 2.6 2.9.4-2.1 2 0.5 2.9-2.6-1.4-2.6 1.4 0.5-2.9-2.1-2 2.9-.4z" fill="#fff"/>
+  </g>
+  <text x="76" y="48" font-family="Georgia,serif" font-size="31" font-weight="700" fill="#101b18"><tspan font-style="italic" fill="#286fb5">phone</tspan><tspan>Case254</tspan></text>
+</svg>

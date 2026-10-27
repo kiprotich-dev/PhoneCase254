@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" role="img" aria-labelledby="title desc">
+  <title id="title">phoneCase254</title>
+  <desc id="desc">A modern phone case outline with a cyan star and phoneCase254 wordmark.</desc>
+  <defs>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9be7ff"/>
+      <stop offset="1" stop-color="#2d8cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="180" rx="36" fill="#101b18"/>
+  <g transform="translate(32 22)">
+    <rect x="0" y="0" width="132" height="136" rx="28" fill="none" stroke="url(#mark)" stroke-width="10"/>
+    <rect x="20" y="22" width="92" height="92" rx="16" fill="#173b4b" stroke="#9be7ff" stroke-opacity=".38" stroke-width="3"/>
+    <circle cx="88" cy="42" r="13" fill="#ff5d6c"/>
+    <path d="M88 32l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z" fill="#fff"/>
+    <circle cx="66" cy="126" r="5" fill="#9be7ff"/>
+  </g>
+  <text x="190" y="98" fill="#fff" font-family="Georgia,serif" font-size="54" font-weight="700"><tspan font-style="italic" fill="#9be7ff">phone</tspan><tspan>Case254</tspan></text>
+  <text x="194" y="132" fill="#a7c0c8" font-family="Arial,sans-serif" font-size="16" letter-spacing="4">STYLE YOUR PHONE</text>
+</svg>

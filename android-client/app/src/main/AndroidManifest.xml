@@ -3,6 +3,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="false"
+        android:icon="@drawable/phonecase254_launch"
         android:label="PhoneCase254"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
@@ -14,5 +15,7 @@
         </activity>
     </application>
 </manifest>
+
+
 
 
