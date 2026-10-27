@@ -9,4 +9,5 @@
 .brand-logo-link{display:inline-flex;align-items:center}.brand-logo{display:block;height:52px;width:auto}.footer-brand .brand-logo{height:70px}@media(max-width:600px){.brand-logo{height:45px}.footer-brand .brand-logo{height:62px}}
 
 
-.brand-logo-link{gap:9px}.brand-mark{display:block;width:45px;height:45px;object-fit:cover;border-radius:10px}.brand-name{font:600 23px 'Playfair Display',serif;letter-spacing:-.04em;color:var(--ink)}@media(max-width:600px){.brand-mark{width:38px;height:38px}.brand-name{font-size:18px}}
+.brand-logo-link{gap:0}.brand-mark{display:block;width:58px;height:58px;object-fit:cover;border-radius:12px}@media(max-width:600px){.brand-mark{width:46px;height:46px}}
+
