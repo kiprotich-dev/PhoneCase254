@@ -22,7 +22,7 @@ urlpatterns = [
     path('store-control-254/reports/', views.dashboard_reports, name='dashboard_reports'),
     path('store-control-254/settings/', views.dashboard_settings, name='dashboard_settings'),
     path('store-control-254/search/', views.dashboard_search, name='dashboard_search'),
-    path('', views.home, name='home'), path('careers/', views.careers, name='careers'), path('careers/<slug:slug>/', views.career_detail, name='career_detail'), path('offers/', views.offers, name='offers'), path('shop/', views.shop, name='shop'), path('shop/<slug:slug>/', views.product_detail, name='product_detail'), path('shop/<slug:slug>/review/', views.review_product, name='review_product'),
+    path('', views.home, name='home'), path('careers/', views.careers, name='careers'), path('careers/<slug:slug>/', views.career_detail, name='career_detail'), path('offers/', views.offers, name='offers'), path('faq/', views.faq, name='faq'), path('api/nova/', views.nova_ai, name='nova_ai'), path('shop/', views.shop, name='shop'), path('shop/<slug:slug>/', views.product_detail, name='product_detail'), path('shop/<slug:slug>/review/', views.review_product, name='review_product'),
     path('cart/', views.cart, name='cart'), path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'), path('cart/remove/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'), path('cart/update/', views.update_cart, name='update_cart'),
     path('wishlist/', views.wishlist, name='wishlist'), path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
     path('signup/', views.signup, name='signup'), path('activate/<uidb64>/<token>/', views.activate, name='activate'),
@@ -35,3 +35,6 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
 ]
+
+
+

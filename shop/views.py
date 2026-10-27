@@ -2,6 +2,7 @@ from decimal import Decimal
 import io
 import json
 import mimetypes
+import requests
 import os
 import zipfile
 from xml.sax.saxutils import escape
@@ -829,3 +830,36 @@ def mpesa_callback(request):
     except (ValueError, TypeError, AttributeError):
         pass
     return JsonResponse({'ResultCode': 0, 'ResultDesc': 'Callback processed'})
+
+
+
+def faq(request):
+    return render(request, 'shop/faq.html')
+
+@require_POST
+def nova_ai(request):
+    provider_url = os.environ.get('NOVA_AI_URL', 'https://api.openai.com/v1/chat/completions')
+    api_key = os.environ.get('NOVA_AI_API_KEY', '')
+    model = os.environ.get('NOVA_AI_MODEL', 'gpt-4o-mini')
+    if not api_key:
+        return JsonResponse({'ok': False, 'message': 'Nova AI is currently in quick-answer mode. Please try a FAQ topic or contact support.'}, status=503)
+    try:
+        payload = json.loads(request.body or '{}')
+        question = str(payload.get('message', '')).strip()[:2000]
+        history = payload.get('history', [])[-8:]
+        if not question:
+            return JsonResponse({'ok': False, 'message': 'Please type a question.'}, status=400)
+        messages = [{'role': 'system', 'content': 'You are Nova AI, the friendly phoneCase254 customer support assistant. Give accurate, concise help about phone cases, products, offers, orders, delivery, M-Pesa, tracking, returns, rewards, careers, and account support. Use an empathetic tone when a customer sounds worried or frustrated, but do not claim to know their feelings or make medical or financial diagnoses. Ask one clarifying question when needed. Never invent order details, payment results, stock, company policies, CEO facts, or personal data. Direct customers to /shop/, /offers/, /orders/, /careers/, /faq/, or support when appropriate. The Founder and CEO is Vincent Kiprotich; LinkedIn: www.linkedin.com/in/vincent-kiprotich-84257b221.'}]
+        for item in history:
+            if isinstance(item, dict) and item.get('role') in ('user', 'assistant'):
+                messages.append({'role': item['role'], 'content': str(item.get('content', ''))[:2000]})
+        messages.append({'role': 'user', 'content': question})
+        response = requests.post(provider_url, headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}, json={'model': model, 'messages': messages, 'temperature': 0.4, 'max_tokens': 350}, timeout=20)
+        response.raise_for_status()
+        data = response.json()
+        answer = data['choices'][0]['message']['content'].strip()
+        return JsonResponse({'ok': True, 'message': answer})
+    except (requests.RequestException, KeyError, ValueError, TypeError) as error:
+        logger.warning('Nova AI request failed: %s', error)
+        return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+

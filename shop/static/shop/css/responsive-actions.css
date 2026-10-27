@@ -28,3 +28,5 @@
   header nav#primary-navigation{order:initial;flex:initial;width:100%}
 }
 @media(max-width:380px){header .header-actions .join-link{display:none}header{column-gap:6px;padding-left:3%;padding-right:3%}header .brand{font-size:16px}}
+
+header{position:sticky;top:0;z-index:10;background:var(--paper);box-shadow:0 2px 12px rgba(30,36,32,.06)}@media(max-width:700px){header{top:0}}

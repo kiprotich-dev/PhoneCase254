@@ -17,6 +17,7 @@
       <link rel="stylesheet" href="{% static 'shop/css/careers.css' %}">
       <link rel="stylesheet" href="{% static 'shop/css/promotions.css' %}">
       <link rel="stylesheet" href="{% static 'shop/css/responsive-actions.css' %}">
+      <link rel="stylesheet" href="{% static 'shop/css/faq-chat.css' %}">
       {% block extra_css %}{% endblock %}
     </head>
     <body>
@@ -52,6 +53,7 @@
           <a href="{% url 'careers' %}">
             Careers
           </a>
+          <a href="{% url 'faq' %}">FAQs</a>
         </nav>
         <div class="header-actions">
           <form class="search" action="{% url 'shop' %}">
@@ -126,6 +128,7 @@
                     <a href="{% url 'careers' %}">
                       Careers
                     </a>
+          <a href="{% url 'faq' %}">FAQs</a>
                   </div>
                   <div>
                     <b>
@@ -151,5 +154,11 @@
                 </footer>
                 <script src="{% static 'shop/js/app.js' %}">
                 </script>
-              </body>
+              <script src="{% static 'shop/js/faq-chat.js' %}"></script><script src="{% static 'shop/js/nova-ai.js' %}"></script></body>
             </html>
+
+
+
+
+
+
