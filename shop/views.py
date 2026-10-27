@@ -269,9 +269,15 @@ def dashboard_order_status_update(request, order_id):
     elif new_status == order.status:
         messages.info(request, f'{order.public_reference} is already marked {order.get_status_display().lower()}.')
     else:
+        was_on_delivery = order.payment_method == 'cod' and order.payment_status == 'on_delivery'
         order.status = new_status
-        order.save(update_fields=['status'])
-        messages.success(request, f'{order.public_reference} updated to {order.get_status_display()}.')
+        order.save(update_fields=['status', 'payment_status'])
+        if new_status == 'delivered' and was_on_delivery and order.payment_status == 'paid':
+            profile, _ = CustomerProfile.objects.get_or_create(user=order.user)
+            profile.record_payment(order)
+            messages.success(request, f'{order.public_reference} delivered and payment recorded as received.')
+        else:
+            messages.success(request, f'{order.public_reference} updated to {order.get_status_display()}.')
     return redirect(request.POST.get('next') or 'dashboard_orders')
 
 @staff_required
@@ -862,4 +868,5 @@ def nova_ai(request):
     except (requests.RequestException, KeyError, ValueError, TypeError) as error:
         logger.warning('Nova AI request failed: %s', error)
         return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+
 

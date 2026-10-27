@@ -158,6 +158,13 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='queue')
     created_at = models.DateTimeField(auto_now_add=True)
     def save(self, *args, **kwargs):
+        # Cash-on-delivery becomes recognized revenue only when staff confirms delivery.
+        if self.status == 'delivered' and self.payment_method == 'cod' and self.payment_status == 'on_delivery':
+            self.payment_status = 'paid'
+            if kwargs.get('update_fields') is not None:
+                update_fields = set(kwargs['update_fields'])
+                update_fields.add('payment_status')
+                kwargs['update_fields'] = update_fields
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if is_new and not self.public_reference:
@@ -192,3 +199,4 @@ class ContactMessage(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self): return f'{self.user.username} · {self.created_at:%d %b %Y %H:%M}'
+
