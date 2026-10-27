@@ -8,6 +8,7 @@ urlpatterns = [
     path('store-control-254/products/new/', views.dashboard_product_add, name='dashboard_product_add'),
     path('store-control-254/jobs/', views.dashboard_jobs, name='dashboard_jobs'),
     path('store-control-254/jobs/applications/', views.dashboard_job_applications, name='dashboard_job_applications'),
+    path('store-control-254/jobs/applications/<int:application_id>/', views.dashboard_application_detail, name='dashboard_application_detail'),
     path('store-control-254/jobs/applications/<int:application_id>/resume/', views.dashboard_application_resume, name='dashboard_application_resume'),
     path('store-control-254/jobs/applications', views.dashboard_job_applications, name='dashboard_job_applications_no_slash'),
     path('store-control-254/jobs/new/', views.dashboard_job_add, name='dashboard_job_add'),
@@ -35,6 +36,7 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
 ]
+
 
 
 

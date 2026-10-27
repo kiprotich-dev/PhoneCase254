@@ -215,6 +215,16 @@ def dashboard_job_applications(request):
     return render(request, 'shop/dashboard_job_applications.html', {'applications': applications})
 
 @staff_required
+def dashboard_application_detail(request, application_id):
+    application = get_object_or_404(JobApplication.objects.select_related('job'), pk=application_id)
+    resume_name = os.path.basename(application.resume.name) if application.resume else ''
+    return render(request, 'shop/dashboard_application_detail.html', {
+        'application': application,
+        'resume_name': resume_name,
+        'resume_is_pdf': resume_name.lower().endswith('.pdf'),
+    })
+
+@staff_required
 def dashboard_application_resume(request, application_id):
     application = get_object_or_404(JobApplication, pk=application_id)
     if not application.resume:
@@ -225,7 +235,7 @@ def dashboard_application_resume(request, application_id):
         if not public_id.startswith('media/'):
             public_id = f'media/{public_id}'
         file_format = os.path.splitext(application.resume.name)[1].lstrip('.').lower() or 'pdf'
-        private_url = cloudinary.utils.private_download_url(public_id, file_format, resource_type='image', type='upload', secure=True, attachment=False)
+        private_url = cloudinary.utils.private_download_url(public_id, file_format, resource_type='image', type='upload', secure=True, attachment=request.GET.get('download') == '1')
         return redirect(private_url)
     response = FileResponse(application.resume.open('rb'), content_type=mimetypes.guess_type(application.resume.name)[0] or 'application/octet-stream')
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(application.resume.name)}"'
@@ -873,6 +883,7 @@ def nova_ai(request):
     except (requests.RequestException, KeyError, ValueError, TypeError) as error:
         logger.warning('Nova AI request failed: %s', error)
         return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+
 
 
 

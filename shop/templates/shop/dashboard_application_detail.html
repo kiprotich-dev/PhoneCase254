@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ application.full_name }} · Application review</title>
+  <link rel="stylesheet" href="{% static 'shop/css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'shop/css/dashboard-dark.css' %}">
+  <link rel="stylesheet" href="{% static 'shop/css/dashboard-contrast.css' %}">
+  <style>
+    .application-review{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,520px);gap:20px}
+    .review-card{padding:22px;background:#0a2140;border:1px solid #174574;border-radius:8px;color:#edf5ff}
+    .review-card h2{margin:0 0 15px;color:#fff}.review-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border-bottom:1px solid #174574;padding-bottom:18px;margin-bottom:20px}.review-meta span{display:block;color:#9bb4d4;font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}.review-meta strong{color:#fff}.cover-letter{white-space:pre-wrap;line-height:1.75;color:#dcecff;font-size:14px}.document-frame{width:100%;height:680px;border:1px solid #235080;background:#fff;border-radius:6px}.document-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.document-actions a{display:inline-block;padding:11px 14px;border:1px solid #235080;border-radius:6px;color:#bfe0ff}.document-actions a:hover{background:#1685ff;color:#fff}.empty-document{padding:40px 15px;text-align:center;color:#9bb4d4;background:#071b35;border:1px dashed #235080;border-radius:6px}@media(max-width:900px){.application-review{grid-template-columns:1fr}.document-frame{height:620px}}@media(max-width:600px){.review-meta{grid-template-columns:1fr}.document-frame{height:520px}}
+  </style>
+</head>
+<body class="dashboard-body">
+  <aside class="dashboard-sidebar"><a class="dashboard-brand" href="{% url 'dashboard' %}"><span>phone</span>Case254<small>STORE CONTROL</small></a><nav class="dashboard-nav"><a class="active" href="{% url 'dashboard_job_applications' %}">✦ Applications</a><a href="{% url 'dashboard_jobs' %}">← Jobs</a><a href="{% url 'dashboard' %}">⌂ Dashboard</a></nav></aside>
+  <main class="dashboard-main"><section class="dashboard-content">
+    <div class="dashboard-heading"><div><p class="dashboard-eyebrow">People</p><h1>Application review</h1><p>Read the full cover letter and review the submitted document consistently.</p></div><a class="button-dashboard" href="{% url 'dashboard_job_applications' %}">← Applications</a></div>
+    <div class="application-review">
+      <section class="review-card"><h2>Candidate details</h2><div class="review-meta"><div><span>Applicant</span><strong>{{ application.full_name }}</strong></div><div><span>Position</span><strong>{{ application.job.title }}</strong></div><div><span>Email</span><strong>{{ application.email }}</strong></div><div><span>Phone</span><strong>{{ application.phone }}</strong></div><div><span>Received</span><strong>{{ application.created_at|date:'d M Y H:i' }}</strong></div></div><h2>Cover letter</h2><div class="cover-letter">{{ application.cover_letter }}</div></section>
+      <section class="review-card"><h2>Submitted CV</h2>{% if application.resume %}{% if resume_is_pdf %}<iframe class="document-frame" src="{% url 'dashboard_application_resume' application.id %}" title="CV for {{ application.full_name }}"></iframe>{% else %}<div class="empty-document">This file type cannot be previewed inside the browser. Use the button below to open or download it.</div>{% endif %}<div class="document-actions"><a href="{% url 'dashboard_application_resume' application.id %}" target="_blank" rel="noopener">Open CV</a><a href="{% url 'dashboard_application_resume' application.id %}?download=1">Download CV</a></div>{% else %}<div class="empty-document">No CV was attached to this application.</div>{% endif %}</section>
+    </div>
+  </section></main>
+</body>
+</html>
