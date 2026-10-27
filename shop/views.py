@@ -468,6 +468,9 @@ def add_to_cart(request, product_id):
         return redirect(request.POST.get('next') or request.META.get('HTTP_REFERER') or 'shop')
     cart_data[key] = min(int(cart_data.get(key, 0)) + 1, product.stock)
     request.session.modified = True
+    # Moving a saved item into the bag removes it from the wishlist.
+    if request.user.is_authenticated:
+        Wishlist.objects.filter(user=request.user, product=product).delete()
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'ok': True, 'message': f'{product.name} added to your bag.', 'cart_count': sum(cart_data.values())})
     messages.success(request, f'{product.name} added to your bag.')
@@ -883,6 +886,7 @@ def nova_ai(request):
     except (requests.RequestException, KeyError, ValueError, TypeError) as error:
         logger.warning('Nova AI request failed: %s', error)
         return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+
 
 
 
