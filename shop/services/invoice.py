@@ -2,7 +2,7 @@ from io import BytesIO
 from xml.sax.saxutils import escape
 
 
-def build_invoice_pdf(order, items, customer_email):
+def build_invoice_pdf(order, items, customer_email, include_transaction_code=False):
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_RIGHT
     from reportlab.lib.pagesizes import A4
@@ -27,12 +27,15 @@ def build_invoice_pdf(order, items, customer_email):
         canvas.restoreState()
 
     document = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=20 * mm, leftMargin=20 * mm, topMargin=28 * mm, bottomMargin=18 * mm)
+    payment_details = f'<b>Payment status:</b> {escape(order.get_payment_status_display())}<br/><b>Order status:</b> {escape(order.get_status_display())}'
+    if include_transaction_code and order.mpesa_receipt:
+        payment_details += f'<br/><b>M-Pesa transaction code:</b> {escape(order.mpesa_receipt)}'
     story = [
         Paragraph(f'ORDER INVOICE {order.public_reference}', styles['SmallMuted']),
         Spacer(1, 12),
         code128.Code128(order.public_reference, barHeight=14 * mm, barWidth=0.38 * mm, humanReadable=True),
         Spacer(1, 14),
-        Paragraph(f'<b>Payment status:</b> {escape(order.get_payment_status_display())}<br/><b>Order status:</b> {escape(order.get_status_display())}' + (f'<br/><b>M-Pesa transaction code:</b> {escape(order.mpesa_receipt)}' if order.mpesa_receipt else ''), styles['Normal']),
+        Paragraph(payment_details, styles['Normal']),
         Spacer(1, 14),
         Paragraph(f'<b>Customer</b><br/>{order.full_name}<br/>{customer_email}<br/>{order.phone}<br/>{order.delivery_address}', styles['Normal']),
         Spacer(1, 18),
@@ -59,3 +62,4 @@ def build_invoice_pdf(order, items, customer_email):
     story.extend([totals_table, Spacer(1, 20), Paragraph('Thank you for shopping with phoneCase254. Keep this invoice for your records.', styles['SmallMuted'])])
     document.build(story, onFirstPage=draw_header, onLaterPages=draw_header)
     return buffer.getvalue()
+

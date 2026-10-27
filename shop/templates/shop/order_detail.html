@@ -18,7 +18,7 @@
       ·
       {{ order.get_payment_status_display }}
     </p>
-    {% if order.mpesa_receipt %}<p class="muted">M-Pesa transaction code: <strong>{{ order.mpesa_receipt }}</strong></p>{% endif %}
+    
     {% for item in order.items.all %}
       <div class="order-row">
         <span>
@@ -118,3 +118,4 @@
           </a>
         </main>
         {% endblock %}
+

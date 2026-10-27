@@ -23,7 +23,7 @@
           <p class="muted">Tracking will appear here as your order is processed.</p>
         {% endfor %}
       </div>
-      <p class="muted">Payment: <strong>{{ order.get_payment_status_display }}</strong>{% if order.mpesa_receipt %} · M-Pesa code: <strong>{{ order.mpesa_receipt }}</strong>{% endif %}</p>
+      <p class="muted">Payment: <strong>{{ order.get_payment_status_display }}</strong></p>
     </section>
 
     <section class="tracking-card tracking-items">
@@ -43,3 +43,4 @@
     </div>
   </main>
 {% endblock %}
+

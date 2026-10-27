@@ -650,7 +650,7 @@ def invoice_download(request, order_id):
     else:
         order = get_object_or_404(order_query, pk=order_id, user=request.user, payment_status__in=['paid', 'on_delivery'])
     items = [{'product': item.product, 'quantity': item.quantity, 'line_total': item.line_total} for item in order.items.all()]
-    pdf = build_invoice_pdf(order, items, order.user.email)
+    pdf = build_invoice_pdf(order, items, order.user.email, include_transaction_code=request.user.is_staff)
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="phoneCase254-{order.public_reference}.pdf"'
     return response
@@ -704,7 +704,7 @@ def order_status(request, order_id):
                 logger.info('Leaving order %s pending until callback confirms query code=%s', order.public_reference, result_code)
         except Exception:
             logger.debug('M-Pesa status query is still pending for order %s', order.id, exc_info=True)
-    response = JsonResponse({'status': order.status, 'payment_status': order.payment_status, 'receipt': order.mpesa_receipt})
+    response = JsonResponse({'status': order.status, 'payment_status': order.payment_status})
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response
 
@@ -873,6 +873,8 @@ def nova_ai(request):
     except (requests.RequestException, KeyError, ValueError, TypeError) as error:
         logger.warning('Nova AI request failed: %s', error)
         return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+
+
 
 
 
