@@ -45,3 +45,11 @@ header{position:sticky;top:0;z-index:10;background:var(--paper);box-shadow:0 2px
     z-index: 1001;
   }
 }
+
+/* overflow-x:hidden can disable sticky positioning in some Android/WebView browsers. */
+@media (max-width: 600px) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
