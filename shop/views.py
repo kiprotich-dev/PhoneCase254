@@ -218,10 +218,12 @@ def dashboard_job_applications(request):
 def dashboard_application_detail(request, application_id):
     application = get_object_or_404(JobApplication.objects.select_related('job'), pk=application_id)
     resume_name = os.path.basename(application.resume.name) if application.resume else ''
+    resume_extension = os.path.splitext(resume_name)[1].lower()
     return render(request, 'shop/dashboard_application_detail.html', {
         'application': application,
         'resume_name': resume_name,
-        'resume_is_pdf': resume_name.lower().endswith('.pdf'),
+        # Cloudinary can omit the original extension from a stored public ID.
+        'resume_is_previewable': resume_extension in {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.txt', '.html'} or not resume_extension,
     })
 
 @staff_required
@@ -230,13 +232,9 @@ def dashboard_application_resume(request, application_id):
     if not application.resume:
         return HttpResponse('No CV attached.', status=404)
     if os.environ.get('CLOUDINARY_URL'):
-        import cloudinary.utils
-        public_id = application.resume.name
-        if not public_id.startswith('media/'):
-            public_id = f'media/{public_id}'
-        file_format = os.path.splitext(application.resume.name)[1].lstrip('.').lower() or 'pdf'
-        private_url = cloudinary.utils.private_download_url(public_id, file_format, resource_type='image', type='upload', secure=True, attachment=request.GET.get('download') == '1')
-        return redirect(private_url)
+        # Use the storage-generated URL. Public IDs may contain dots or have no extension,
+        # so constructing a private_download_url can produce invalid Cloudinary formats.
+        return redirect(application.resume.url)
     response = FileResponse(application.resume.open('rb'), content_type=mimetypes.guess_type(application.resume.name)[0] or 'application/octet-stream')
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(application.resume.name)}"'
     return response
@@ -886,6 +884,7 @@ def nova_ai(request):
     except (requests.RequestException, KeyError, ValueError, TypeError) as error:
         logger.warning('Nova AI request failed: %s', error)
         return JsonResponse({'ok': False, 'message': 'Nova AI is temporarily unavailable. I can still help with the FAQ topics or connect you to support.'}, status=502)
+
 
 
 
